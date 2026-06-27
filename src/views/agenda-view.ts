@@ -1,12 +1,12 @@
-import { ItemView, WorkspaceLeaf, TFile, MarkdownView, Notice, Setting } from 'obsidian';
-import { parseTaskLine, parseTaskLines, isTaskLine, isMetaLine, serializeTask } from '../utils/parser';
+import { ItemView, WorkspaceLeaf, TFile, MarkdownView, Notice } from 'obsidian';
+import { parseTaskLines, isTaskLine, isMetaLine, serializeTask } from '../utils/parser';
 import { ParsedTask, Priority } from '../models/task';
 import { isToday, isThisWeek, isThisMonth } from '../utils/date-utils';
 import { GtdPluginSettings } from '../settings';
-import { t, groupTitles, metaKeywords } from '../utils/i18n';
+import { t, groupTitles } from '../utils/i18n';
 import {
 	getPomodoroState, startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro,
-	formatPomodoroTime, PomodoroPhase,
+	formatPomodoroTime,
 } from '../utils/pomodoro';
 import { TIMELINE_VIEW_TYPE } from './timeline-view';
 import { STATS_VIEW_TYPE } from './stats-view';
@@ -462,7 +462,7 @@ export class AgendaView extends ItemView {
 	private async navigateToTask(entry: TaskEntry) {
 		const leaf = this.app.workspace.getLeaf(false);
 		await leaf.openFile(entry.file, { active: true });
-		setTimeout(() => {
+		window.setTimeout(() => {
 			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 			if (view) {
 				view.editor.setCursor(entry.task.line, 0);

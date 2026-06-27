@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownView } from 'obsidian';
 import { t, Lang } from '../utils/i18n';
 import { parseTaskLines } from '../utils/parser';
-import { ClockRecord, extractClockRecords, totalMinutes, formatDuration as fmtClock } from '../utils/clock-parser';
+import { ClockRecord, extractClockRecords, formatDuration as fmtClock } from '../utils/clock-parser';
 import { todayStr, formatDate, isThisWeek, isThisMonth, getWeekStart, getMonthPeriodStart } from '../utils/date-utils';
 
 export const STATS_VIEW_TYPE = 'gtd-stats';

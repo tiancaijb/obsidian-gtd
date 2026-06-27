@@ -69,7 +69,7 @@ function startInterval() {
 }
 
 function stopInterval() {
-	if (intervalId !== null) { clearInterval(intervalId); intervalId = null; }
+	if (intervalId !== null) { window.clearInterval(intervalId); intervalId = null; }
 }
 
 export function setPomodoroConfig(c: Partial<PomodoroConfig>) {

@@ -1,7 +1,6 @@
 import { App, Modal, Notice, TFile } from 'obsidian';
 import { Priority } from '../models/task';
 import { t, metaKeywords } from '../utils/i18n';
-import type { Lang } from '../utils/i18n';
 
 const PRIOS: { key: string; value: Priority | ''; label: string; color: string }[] = [
 	{ key: '0', value: '', label: 'None', color: '#888' },
@@ -31,7 +30,7 @@ export class CaptureModal extends Modal {
 			cls: 'gtd-capture-input',
 			attr: { type: 'text', placeholder: `${t('quickCapturePlaceholder', this.lang)} (Enter = submit)` },
 		});
-		setTimeout(() => input.focus(), 50);
+		window.setTimeout(() => input.focus(), 50);
 
 		// Priority hint + buttons
 		const prioRow = contentEl.createDiv({ cls: 'gtd-capture-prio-row' });

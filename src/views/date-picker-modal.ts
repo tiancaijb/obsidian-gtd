@@ -120,7 +120,7 @@ export class DatePickerModal extends Modal {
 			if (e.key === 'Escape') this.close();
 		});
 
-		setTimeout(() => textInput.focus(), 50);
+		window.setTimeout(() => textInput.focus(), 50);
 	}
 
 	onClose() {

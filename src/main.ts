@@ -1,5 +1,5 @@
-import { Editor, MarkdownView, MarkdownFileInfo, Plugin, Notice } from 'obsidian';
-import { parseTaskLine, parseTaskLines, serializeTask, isTaskLine, isMetaLine } from './utils/parser';
+import { Editor, MarkdownView, Plugin, Notice } from 'obsidian';
+import { parseTaskLines, parseTaskLine, serializeTask, isTaskLine, isMetaLine } from './utils/parser';
 import { t, metaKeywords, gtdFilenames } from './utils/i18n';
 import { ParsedTask, Priority } from './models/task';
 import { GtdPluginSettings, GtdSettingTab, DEFAULT_SETTINGS } from './settings';
@@ -10,7 +10,7 @@ import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
 import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, formatClockLine, setTickCallback } from './utils/timer';
-import { setPomodoroConfig, setPomodoroCallbacks, getPomodoroState, startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro, formatPomodoroTime, PomodoroPhase } from './utils/pomodoro';
+import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase } from './utils/pomodoro';
 
 const PRIORITIES: (Priority | null)[] = ['A', 'B', 'C', null];
 
@@ -48,8 +48,7 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'gtd-cycle-priority',
-			name: 'Priority ↑ (A → B → C → none)',
-			hotkeys: [{ modifiers: ['Shift'], key: 'ArrowUp' }],
+			name: 'Cycle priority ↑ (A → B → C → none)',
 			editorCallback: (editor: Editor) => {
 				this.modifyCurrentLine(editor, (task) => {
 					const idx = PRIORITIES.indexOf(task.priority);
@@ -60,8 +59,7 @@ export default class OrgGtdPlugin extends Plugin {
 		});
 		this.addCommand({
 			id: 'gtd-cycle-priority-down',
-			name: 'Priority ↓ (none → C → B → A)',
-			hotkeys: [{ modifiers: ['Shift'], key: 'ArrowDown' }],
+			name: 'Cycle priority ↓ (none → C → B → A)',
 			editorCallback: (editor: Editor) => {
 				this.modifyCurrentLine(editor, (task) => {
 					const idx = PRIORITIES.indexOf(task.priority);
@@ -118,14 +116,12 @@ export default class OrgGtdPlugin extends Plugin {
 		this.addCommand({
 			id: 'gtd-promote',
 			name: 'Promote task (reduce indent)',
-			hotkeys: [{ modifiers: ['Alt'], key: 'ArrowLeft' }],
 			editorCallback: (editor: Editor) => this.adjustIndent(editor, -2),
 		});
 
 		this.addCommand({
 			id: 'gtd-demote',
 			name: 'Demote task (increase indent)',
-			hotkeys: [{ modifiers: ['Alt'], key: 'ArrowRight' }],
 			editorCallback: (editor: Editor) => this.adjustIndent(editor, 2),
 		});
 
@@ -133,7 +129,6 @@ export default class OrgGtdPlugin extends Plugin {
 		this.addCommand({
 			id: 'gtd-insert-task',
 			name: 'Insert task: - [ ]',
-			hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'Enter' }],
 			editorCallback: (editor: Editor) => {
 				editor.replaceSelection('- [ ] ');
 			},
@@ -142,8 +137,7 @@ export default class OrgGtdPlugin extends Plugin {
 		// --- Quick Capture (from anywhere) ---
 		this.addCommand({
 			id: 'gtd-quick-capture',
-			name: 'Quick Capture',
-			hotkeys: [{ modifiers: ['Ctrl', 'Shift'], key: 'C' }],
+			name: 'Quick capture',
 			callback: () => {
 				new CaptureModal(this.app, this.settings.inboxPath, this.settings.lang).open();
 			},
@@ -250,14 +244,13 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'gtd-open-agenda',
-			name: 'Open GTD sidebar',
-			hotkeys: [{ modifiers: ['Ctrl', 'Shift'], key: 'G' }],
+			name: 'Open sidebar',
 			callback: () => this.toggleAgendaView(),
 		});
 
 		this.addCommand({
 			id: 'gtd-refresh-agenda',
-			name: 'Refresh GTD sidebar',
+			name: 'Refresh sidebar',
 			callback: async () => {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 				if (leaves.length > 0) {
@@ -310,24 +303,6 @@ export default class OrgGtdPlugin extends Plugin {
 				this.activateAgendaView();
 			}
 		});
-
-		// Poll for plugin file changes (WSL2 workaround)
-		let lastMtime = 0;
-		const pluginDir = ((this.app as any).plugins?.manifests['obsidian-gtd'] as any)?.dir;
-		if (pluginDir) {
-			this.registerInterval(window.setInterval(async () => {
-				if (!this.app) return;
-				try {
-					const stat = await this.app.vault.adapter.stat(`${pluginDir}/main.js`);
-					if (stat && stat.mtime) {
-						if (lastMtime > 0 && stat.mtime !== lastMtime) {
-							new Notice('🔄 GTD updated — run Hot Reload: Check changes');
-						}
-						lastMtime = stat.mtime;
-					}
-				} catch (_) {}
-			}, 3000));
-		}
 
 		new Notice('GTD: loaded');
 	}
@@ -409,7 +384,7 @@ export default class OrgGtdPlugin extends Plugin {
 			if (!(await this.app.vault.adapter.exists(base))) {
 				await this.app.vault.createFolder(base);
 			}
-		} catch (_) {}
+		} catch (_e) { void _e; }
 
 		// Create GTD files with combined English-Chinese names
 		for (const fname of Object.values(gtdFilenames)) {
@@ -418,7 +393,7 @@ export default class OrgGtdPlugin extends Plugin {
 				if (!(await this.app.vault.adapter.exists(filePath))) {
 					await this.app.vault.create(filePath, '\n');
 				}
-			} catch (_) {}
+			} catch (_e) { void _e; }
 		}
 
 		this.settings.inboxPath = `${base}/${gtdFilenames.inbox}.md`;
@@ -471,7 +446,7 @@ export default class OrgGtdPlugin extends Plugin {
 			if (leaves.length > 0) {
 				(leaves[0]!.view as unknown as AgendaView).refresh();
 			}
-		} catch (_) {}
+		} catch (_e) { void _e; }
 	}
 
 	toggleAgendaView() {
