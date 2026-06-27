@@ -13,9 +13,9 @@ interface ClockWithTask {
 }
 
 const COLORS = [
-	'#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#1abc9c',
-	'#3498db', '#9b59b6', '#e84393', '#00b894', '#6c5ce7',
-	'#00cec9', '#fd79a8', '#d63031', '#e17055', '#0984e3',
+	'#ff6b6b', '#ffa94d', '#ffd43b', '#69db7c', '#38d9a9',
+	'#4dabf7', '#da77f2', '#f06595', '#20c997', '#748ffc',
+	'#22b8cf', '#f783ac', '#ff8787', '#fcc419', '#339af0',
 ];
 
 function hashColor(key: string): string {
