@@ -9,6 +9,7 @@ import { TimelineView, TIMELINE_VIEW_TYPE } from './views/timeline-view';
 import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
+import { WelcomeModal } from './views/welcome-modal';
 import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, formatClockLine, setTickCallback } from './utils/timer';
 import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState } from './utils/pomodoro';
 
@@ -305,6 +306,16 @@ export default class OrgGtdPlugin extends Plugin {
 		});
 
 		new Notice('Gtd: loaded');
+
+		// First-run welcome
+		this.app.workspace.onLayoutReady(() => {
+			if (this.settings.firstRun) {
+				new WelcomeModal(this.app, this.settings.lang, () => {
+					this.settings.firstRun = false;
+					void this.saveSettings();
+				}).open();
+			}
+		});
 	}
 
 	modifyCurrentLine(editor: Editor, modify: (t: ParsedTask) => ParsedTask) {

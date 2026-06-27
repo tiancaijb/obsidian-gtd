@@ -1079,3 +1079,24 @@
 
 .gtd-pomo-section.hidden { display: none; }
 
+
+/* ── 欢迎弹窗 ── */
+.gtd-welcome { padding: 20px; }
+.gtd-welcome h2 { margin-bottom: 8px; }
+.gtd-welcome-desc { color: var(--text-muted); margin-bottom: 20px; font-size: 14px; }
+.gtd-welcome-step { padding: 10px 0; border-bottom: 1px solid var(--background-modifier-border); }
+.gtd-welcome-step:last-child { border-bottom: none; }
+.gtd-welcome-step strong { font-size: 14px; display: block; margin-bottom: 2px; }
+.gtd-welcome-step p { font-size: 13px; color: var(--text-muted); margin: 0; }
+.gtd-welcome-btn { margin-top: 16px; text-align: right; }
+.gtd-welcome-btn button { padding: 6px 24px; font-size: 14px; }
+
+/* ── 设置页快速开始 ── */
+.gtd-quickstart { margin: 8px 0 16px; }
+.gtd-quickstart-row {
+	display: flex; justify-content: space-between; align-items: center;
+	padding: 6px 8px; border-radius: 4px;
+}
+.gtd-quickstart-row:nth-child(odd) { background: var(--background-secondary); }
+.gtd-quickstart-name { font-weight: 600; font-size: 13px; }
+.gtd-quickstart-desc { font-size: 12px; color: var(--text-muted); }

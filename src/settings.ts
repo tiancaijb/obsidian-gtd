@@ -14,6 +14,7 @@ export interface GtdPluginSettings {
 	pomodoroShortBreak: number;
 	pomodoroLongBreak: number;
 	pomodoroLongBreakAfter: number;
+	firstRun: boolean;
 }
 
 export const DEFAULT_SETTINGS: GtdPluginSettings = {
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: GtdPluginSettings = {
 	pomodoroShortBreak: 5,
 	pomodoroLongBreak: 15,
 	pomodoroLongBreakAfter: 4,
+	firstRun: true,
 };
 
 export class GtdSettingTab extends PluginSettingTab {
@@ -45,6 +47,26 @@ export class GtdSettingTab extends PluginSettingTab {
 		const L = () => this.plugin.settings.lang;
 
 		new Setting(containerEl).setName(t('settingsTitle', L())).setHeading();
+
+		// ── Quick Start ──
+		new Setting(containerEl).setName(t('quickStart', L())).setDesc(t('quickStartDesc', L())).setHeading();
+
+		const commands = [
+			{ name: t('qCmdCapture', L()), desc: t('qCmdCaptureDesc', L()) },
+			{ name: t('qCmdPrio', L()), desc: t('qCmdPrioDesc', L()) },
+			{ name: t('qCmdAgenda', L()), desc: t('qCmdAgendaDesc', L()) },
+			{ name: t('qCmdTimer', L()), desc: t('qCmdTimerDesc', L()) },
+			{ name: t('qCmdPromote', L()), desc: t('qCmdPromoteDesc', L()) },
+			{ name: t('qCmdTimeline', L()), desc: t('qCmdTimelineDesc', L()) },
+			{ name: t('qCmdStats', L()), desc: t('qCmdStatsDesc', L()) },
+		];
+
+		const cmdList = containerEl.createEl('div', { cls: 'gtd-quickstart' });
+		for (const cmd of commands) {
+			const row = cmdList.createEl('div', { cls: 'gtd-quickstart-row' });
+			row.createEl('span', { text: cmd.name, cls: 'gtd-quickstart-name' });
+			row.createEl('span', { text: cmd.desc, cls: 'gtd-quickstart-desc' });
+		}
 
 		// ── GTD Folder ──
 		new Setting(containerEl).setName(t('gtdFolderTitle', L())).setHeading();
