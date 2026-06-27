@@ -3,6 +3,7 @@ import OrgGtdPlugin from './main';
 import { Lang, t } from './utils/i18n';
 
 export interface GtdPluginSettings {
+	theme: string;
 	gtdFolder: string;
 	inboxPath: string;
 	futureDays: number;
@@ -16,6 +17,7 @@ export interface GtdPluginSettings {
 }
 
 export const DEFAULT_SETTINGS: GtdPluginSettings = {
+	theme: 'basic',
 	gtdFolder: 'gtd',
 	inboxPath: 'gtd/inbox.md',
 	futureDays: 90,
@@ -43,6 +45,24 @@ export class GtdSettingTab extends PluginSettingTab {
 		const L = () => this.plugin.settings.lang;
 
 		containerEl.createEl('h2', { text: t('settingsTitle', L()) });
+
+		// ── Theme ──
+		containerEl.createEl('h3', { text: t('settingsAppearance', L()) });
+
+		new Setting(containerEl)
+			.setName(t('themeLabel', L()))
+			.setDesc(t('themeDesc', L()))
+			.addDropdown((dd) =>
+				dd
+					.addOption('basic', t('themeBasic', L()))
+					.addOption('premium-dark', t('themePremiumDark', L()) + ' (Premium)')
+					.setValue(this.plugin.settings.theme)
+					.onChange(async (v) => {
+						this.plugin.settings.theme = v;
+						await this.plugin.saveSettings();
+						this.plugin.applyTheme();
+					}),
+			);
 
 		// ── GTD Folder ──
 		containerEl.createEl('h3', { text: t('gtdFolderTitle', L()) });

@@ -92,7 +92,7 @@ export class CaptureModal extends Modal {
 		// Submit
 		const submitBtn = contentEl.createEl('button', {
 			cls: 'gtd-capture-submit',
-			text: `➕ ${t('capture', this.lang)}`,
+			text: `${t('capture', this.lang)}`,
 		});
 
 		const doCapture = async () => {

@@ -19,6 +19,7 @@ export default class OrgGtdPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+	this.applyTheme();
 		this.syncPomodoroConfig();
 
 		this.addSettingTab(new GtdSettingTab(this.app, this));
@@ -495,6 +496,12 @@ export default class OrgGtdPlugin extends Plugin {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as GtdPluginSettings;
 	}
 
+	/** Switch the body-level theme class for GTD */
+	applyTheme() {
+		document.body.classList.remove('gtd-theme-basic', 'gtd-theme-premium-dark');
+		document.body.classList.add('gtd-theme-' + this.settings.theme);
+	}
+
 	private syncPomodoroConfig() {
 		setPomodoroConfig({
 			focusMinutes: this.settings.pomodoroFocus,
@@ -507,6 +514,7 @@ export default class OrgGtdPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		this.syncPomodoroConfig();
+		this.applyTheme();
 		const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 		for (const leaf of leaves) {
 			(leaf.view as unknown as AgendaView).updateSettings(this.settings);

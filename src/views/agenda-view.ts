@@ -89,10 +89,10 @@ export class AgendaView extends ItemView {
 		const min = Math.floor(s.secondsRemaining / 60);
 		const sec = s.secondsRemaining % 60;
 		const timeStr = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-		const phaseLabel = s.phase === 'focus' ? '🍅 Focus'
-			: s.phase === 'shortBreak' ? '🫖 Short break'
-			: '☕ Long break';
-		const status = s.paused ? '⏸ Paused' : timeStr;
+		const phaseLabel = s.phase === 'focus' ? 'Focus'
+			: s.phase === 'shortBreak' ? 'Short break'
+			: 'Long break';
+		const status = s.paused ? 'Paused' : timeStr;
 		const count = `#${s.completedCount + 1}`;
 
 		this.pomodoroEl.empty();
@@ -107,13 +107,13 @@ export class AgendaView extends ItemView {
 		// Controls
 		const ctrl = this.pomodoroEl.createDiv({ cls: 'gtd-pomo-ctrl' });
 		if (s.paused) {
-			ctrl.createEl('button', { text: '▶ Resume' })
+			ctrl.createEl('button', { text: 'Resume' })
 				.addEventListener('click', () => { resumePomodoro(); this.refreshPomodoro(); });
 		} else {
-			ctrl.createEl('button', { text: '⏸ Pause' })
+			ctrl.createEl('button', { text: 'Pause' })
 				.addEventListener('click', () => { pausePomodoro(); this.refreshPomodoro(); });
 		}
-		ctrl.createEl('button', { text: '⏹ Stop' })
+		ctrl.createEl('button', { text: 'Stop' })
 			.addEventListener('click', () => { stopPomodoro(); this.refresh(); });
 	}
 
@@ -133,7 +133,7 @@ export class AgendaView extends ItemView {
 		const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
 		if (t) {
-			this.timerBarEl.setText(`⏱ ${timeStr}`);
+			this.timerBarEl.setText(`T ${timeStr}`);
 			this.timerBarEl.addClass('gtd-timer-active');
 		} else {
 			this.timerBarEl.setText('');
@@ -147,7 +147,7 @@ export class AgendaView extends ItemView {
 		if (t) {
 			const elapsed = this.timerAPI.getElapsed();
 			const totalMin = Math.floor(elapsed / 60000);
-			this.timerBarEl.setText(`⏱ ${Math.floor(totalMin / 60)}h ${totalMin % 60}m`);
+			this.timerBarEl.setText(`T ${Math.floor(totalMin / 60)}h ${totalMin % 60}m`);
 			this.timerBarEl.addClass('gtd-timer-active');
 		}
 	}
@@ -283,7 +283,7 @@ export class AgendaView extends ItemView {
 	private renderGroups(el: HTMLElement, groups: { title: string; entries: TaskEntry[] }[]) {
 		const lang = this.settings.lang;
 		if (groups.length === 0) {
-			el.createEl('div', { text: `${t('noTasks', lang)}. ${t('captureHint', lang)} ☝️`, cls: 'gtd-empty' });
+			el.createEl('div', { text: `${t('noTasks', lang)}. ${t('captureHint', lang)}`, cls: 'gtd-empty' });
 			return;
 		}
 
@@ -375,7 +375,7 @@ export class AgendaView extends ItemView {
 				// Pomodoro button
 				const pomoBtn = row.createEl('span', {
 					cls: 'gtd-pomo-btn',
-					text: '🍅',
+					text: t('pomoLabel', this.settings.lang),
 				});
 				const ps = getPomodoroState();
 				const isThisPomo = ps.phase !== 'idle' && ps.taskFilePath === entry.file.path && ps.taskLine === entry.task.line;

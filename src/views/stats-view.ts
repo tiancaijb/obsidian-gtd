@@ -124,7 +124,7 @@ export class StatsView extends ItemView {
 		// ── Grand total ──
 		const totalBar = container.createDiv({ cls: 'gtd-stats-total' });
 		totalBar.createEl('span', {
-			text: '⏱ ' + t('totalTime', this.lang) + ': ' + fmtClock(grandTotal),
+			text: t('totalTime', this.lang) + ': ' + fmtClock(grandTotal),
 		});
 
 		// ── Per-task list ──
@@ -249,9 +249,17 @@ export class StatsView extends ItemView {
 				csv += st.totalMin + ',';
 				csv += pct + '%\n';
 			}
-			navigator.clipboard.writeText(csv).then(() => {
-				new Notice(t('copied', this.lang));
-			});
+			const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = 'gtd-time-stats.csv';
+			a.style.display = 'none';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+			new Notice('CSV ' + t('downloaded', this.lang));
 		});
 	}
 }
