@@ -235,7 +235,7 @@ export class AgendaView extends ItemView {
 
 		addBtn.addEventListener('click', doCapture);
 		input.addEventListener('keydown', (e) => {
-			if (e.key === 'Enter') doCapture();
+			if (e.key === 'Enter') { void doCapture(); };
 		});
 	}
 

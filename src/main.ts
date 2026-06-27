@@ -27,7 +27,7 @@ export default class OrgGtdPlugin extends Plugin {
 
 		// Ensure GTD folder structure exists
 		this.app.workspace.onLayoutReady(() => {
-			this.ensureGtdFolders();
+			void this.ensureGtdFolders();
 		});
 
 		// --- Commands ---
