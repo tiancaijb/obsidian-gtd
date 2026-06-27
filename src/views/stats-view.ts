@@ -280,14 +280,14 @@ export class StatsView extends ItemView {
 			const dot = lrow.createEl('span', { cls: 'gtd-stats-dot' });
 			dot.style.background = hashColor(st.taskText);
 
-			const nameEl = lrow.createEl('span', { cls: 'gtd-stats-name', text: st.taskText });
+			lrow.createEl('span', { cls: 'gtd-stats-name', text: st.taskText });
 
-			const durEl = lrow.createEl('span', {
+			lrow.createEl('span', {
 				cls: 'gtd-stats-dur',
 				text: fmtClock(st.totalMin),
 			});
 
-			const pctEl = lrow.createEl('span', {
+			lrow.createEl('span', {
 				cls: 'gtd-stats-pct',
 				text: Math.round(pct * 100) + '%',
 			});
