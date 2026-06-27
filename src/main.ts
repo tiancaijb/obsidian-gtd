@@ -233,7 +233,7 @@ export default class OrgGtdPlugin extends Plugin {
 					new Notice(`⏱ ${dur} — ${t('timerTooShort', this.settings.lang)}`);
 					return;
 				}
-				this.appendClockLog(path, line, result.startDate, result.endDate);
+				void this.appendClockLog(path, line, result.startDate, result.endDate);
 				new Notice(`⏱ ${dur}`);
 			},
 		};
@@ -254,7 +254,7 @@ export default class OrgGtdPlugin extends Plugin {
 			callback: async () => {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 				if (leaves.length > 0) {
-					(leaves[0]!.view as unknown as AgendaView).refresh();
+					void (leaves[0]!.view as unknown as AgendaView).refresh();
 				}
 			},
 		});
@@ -270,11 +270,11 @@ export default class OrgGtdPlugin extends Plugin {
 				if (existing.length === 0) {
 					const leaf = this.app.workspace.getRightLeaf(false);
 					if (leaf) {
-						leaf.setViewState({ type: STATS_VIEW_TYPE });
-						this.app.workspace.revealLeaf(leaf);
+					void leaf.setViewState({ type: STATS_VIEW_TYPE });
+						void this.app.workspace.revealLeaf(leaf);
 					}
 				} else {
-					this.app.workspace.revealLeaf(existing[0]!);
+					void this.app.workspace.revealLeaf(existing[0]!);
 				}
 			},
 		});
@@ -287,11 +287,11 @@ export default class OrgGtdPlugin extends Plugin {
 				if (existing.length === 0) {
 					const leaf = this.app.workspace.getRightLeaf(false);
 					if (leaf) {
-						leaf.setViewState({ type: TIMELINE_VIEW_TYPE });
-						this.app.workspace.revealLeaf(leaf);
+					void leaf.setViewState({ type: TIMELINE_VIEW_TYPE });
+						void this.app.workspace.revealLeaf(leaf);
 					}
 				} else {
-					this.app.workspace.revealLeaf(existing[0]!);
+					void this.app.workspace.revealLeaf(existing[0]!);
 				}
 			},
 		});
@@ -300,7 +300,7 @@ export default class OrgGtdPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			const existing = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 			if (existing.length === 0) {
-				this.activateAgendaView();
+				void this.activateAgendaView();
 			}
 		});
 
@@ -416,7 +416,7 @@ export default class OrgGtdPlugin extends Plugin {
 				new Notice(`⏱ ${dur} — too short, not recorded`);
 				return;
 			}
-			this.appendClockLog(filePath, line, result.startDate, result.endDate);
+			void this.appendClockLog(filePath, line, result.startDate, result.endDate);
 			new Notice(`⏱ ${dur}`);
 			return;
 		}
@@ -424,7 +424,7 @@ export default class OrgGtdPlugin extends Plugin {
 		// Different task: stop old (and log it if long enough), start new
 		const oldResult = stopTimer();
 		if (oldResult && oldResult.elapsedMs >= 60000) {
-			this.appendClockLog(current.filePath, current.line, oldResult.startDate, oldResult.endDate);
+			void this.appendClockLog(current.filePath, current.line, oldResult.startDate, oldResult.endDate);
 		}
 		startTimer(filePath, line);
 		new Notice(t('timerStarted', this.settings.lang));
@@ -444,7 +444,7 @@ export default class OrgGtdPlugin extends Plugin {
 
 			const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 			if (leaves.length > 0) {
-				(leaves[0]!.view as unknown as AgendaView).refresh();
+				void (leaves[0]!.view as unknown as AgendaView).refresh();
 			}
 		} catch (_e) { void _e; }
 	}
@@ -452,9 +452,9 @@ export default class OrgGtdPlugin extends Plugin {
 	toggleAgendaView() {
 		const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 		if (leaves.length > 0) {
-			leaves[0]!.detach();
+			void leaves[0]!.detach();
 		} else {
-			this.activateAgendaView();
+			void this.activateAgendaView();
 		}
 	}
 
@@ -462,7 +462,7 @@ export default class OrgGtdPlugin extends Plugin {
 		const leaf = this.app.workspace.getRightLeaf(false);
 		if (!leaf) return;
 		await leaf.setViewState({ type: AGENDA_VIEW_TYPE, active: true });
-		this.app.workspace.revealLeaf(leaf);
+		void this.app.workspace.revealLeaf(leaf);
 	}
 
 	onunload() {}

@@ -292,7 +292,7 @@ export class StatsView extends ItemView {
 				text: Math.round(pct * 100) + '%',
 			});
 
-			lrow.addEventListener('click', async () => {
+			lrow.addEventListener('click',  () => {
 				const file = this.app.vault.getAbstractFileByPath(st.filePath);
 				if (file instanceof TFile) {
 					const leaf = this.app.workspace.getLeaf(false);

@@ -38,6 +38,7 @@ export class GtdSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-deprecated
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
