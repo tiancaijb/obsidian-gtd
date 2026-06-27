@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownView } from 'obsidian';
 import { t, Lang } from '../utils/i18n';
 import { parseTaskLines } from '../utils/parser';
 import { ClockRecord, extractClockRecords, totalMinutes, formatDuration as fmtClock } from '../utils/clock-parser';
+import { todayStr, formatDate, isThisWeek, isThisMonth, getWeekStart, getMonthPeriodStart } from '../utils/date-utils';
 
 export const STATS_VIEW_TYPE = 'gtd-stats';
 
@@ -12,6 +13,8 @@ interface TaskStat {
 	totalMin: number;
 	sessions: number;
 }
+
+type PeriodKey = 'today' | 'yesterday' | 'thisWeek' | 'lastWeek' | 'thisMonth' | 'lastMonth';
 
 const COLORS = [
 	'#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#1abc9c',
@@ -29,6 +32,7 @@ function hashColor(key: string): string {
 
 export class StatsView extends ItemView {
 	private lang: Lang;
+	private period: PeriodKey = 'today';
 
 	constructor(leaf: WorkspaceLeaf, lang: Lang) {
 		super(leaf);
@@ -52,6 +56,66 @@ export class StatsView extends ItemView {
 		this.loadData();
 	}
 
+	/** Return [startDate, endDate] inclusive for the selected period */
+	private getDateRange(): [Date, Date] {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		const weekStartDay = 1; // Monday
+		const monthStartDay = 1;
+
+		switch (this.period) {
+			case 'today':
+				return [new Date(today), new Date(today)];
+			case 'yesterday': {
+				const y = new Date(today);
+				y.setDate(y.getDate() - 1);
+				return [y, y];
+			}
+			case 'thisWeek': {
+				const start = getWeekStart(today, weekStartDay);
+				const end = new Date(start);
+				end.setDate(end.getDate() + 6);
+				return [start, end];
+			}
+			case 'lastWeek': {
+				const start = getWeekStart(today, weekStartDay);
+				start.setDate(start.getDate() - 7);
+				const end = new Date(start);
+				end.setDate(end.getDate() + 6);
+				return [start, end];
+			}
+			case 'thisMonth': {
+				const start = getMonthPeriodStart(today, monthStartDay);
+				const end = new Date(start);
+				end.setMonth(end.getMonth() + 1);
+				end.setDate(monthStartDay - 1);
+				return [start, end];
+			}
+			case 'lastMonth': {
+				const start = getMonthPeriodStart(today, monthStartDay);
+				start.setMonth(start.getMonth() - 1);
+				const end = new Date(start);
+				end.setMonth(end.getMonth() + 1);
+				end.setDate(monthStartDay - 1);
+				return [start, end];
+			}
+		}
+	}
+
+	/** Check if a ClockRecord falls within [start, end] (inclusive) */
+	private recordInRange(rec: ClockRecord, start: Date, end: Date): boolean {
+		const d = new Date(rec.start);
+		d.setHours(0, 0, 0, 0);
+		return d >= start && d <= end;
+	}
+
+	private formatRangeLabel(): string {
+		const [s, e] = this.getDateRange();
+		if (s.getTime() === e.getTime()) return formatDate(s);
+		return formatDate(s) + ' ~ ' + formatDate(e);
+	}
+
 	private async loadData() {
 		const container = this.containerEl.children[1] as HTMLElement;
 		container.empty();
@@ -66,7 +130,35 @@ export class StatsView extends ItemView {
 		});
 		refreshBtn.addEventListener('click', () => this.loadData());
 
-		// ── Scan all files for CLOCK records ──
+		// ── Period selector ──
+		const periodRow = container.createDiv({ cls: 'gtd-stats-period-row' });
+
+		const periods: { key: PeriodKey; labelKey: string }[] = [
+			{ key: 'today', labelKey: 'periodToday' },
+			{ key: 'yesterday', labelKey: 'periodYesterday' },
+			{ key: 'thisWeek', labelKey: 'periodThisWeek' },
+			{ key: 'lastWeek', labelKey: 'periodLastWeek' },
+			{ key: 'thisMonth', labelKey: 'periodThisMonth' },
+			{ key: 'lastMonth', labelKey: 'periodLastMonth' },
+		];
+
+		for (const p of periods) {
+			const btn = periodRow.createEl('button', {
+				cls: 'gtd-stats-period-btn' + (this.period === p.key ? ' active' : ''),
+				text: t(p.labelKey as keyof typeof t, this.lang) as string,
+			});
+			btn.addEventListener('click', () => {
+				this.period = p.key;
+				this.loadData();
+			});
+		}
+
+		// ── Date range label ──
+		const rangeLabel = container.createDiv({ cls: 'gtd-stats-range' });
+		rangeLabel.createEl('span', { text: this.formatRangeLabel() });
+
+		// ── Scan all files for CLOCK records, filtered by period ──
+		const [rangeStart, rangeEnd] = this.getDateRange();
 		const taskMap = new Map<string, TaskStat>();
 
 		for (const file of this.app.vault.getMarkdownFiles()) {
@@ -82,19 +174,21 @@ export class StatsView extends ItemView {
 						const recs = extractClockRecords([lines[j]!]);
 						taskRecords.push(...recs);
 					}
-					if (taskRecords.length > 0) {
-						const totalMin = taskRecords.reduce((s, r) => s + r.durationMin, 0);
+					// Filter records by date range
+					const filtered = taskRecords.filter(r => this.recordInRange(r, rangeStart, rangeEnd));
+					if (filtered.length > 0) {
+						const totalMin = filtered.reduce((s, r) => s + r.durationMin, 0);
 						const existing = taskMap.get(task.text);
 						if (existing) {
 							existing.totalMin += totalMin;
-							existing.sessions += taskRecords.length;
+							existing.sessions += filtered.length;
 						} else {
 							taskMap.set(task.text, {
 								taskText: task.text,
 								filePath: file.path,
 								line: i,
 								totalMin,
-								sessions: taskRecords.length,
+								sessions: filtered.length,
 							});
 						}
 					}
@@ -136,13 +230,6 @@ export class StatsView extends ItemView {
 			const color = hashColor(st.taskText);
 
 			const row = list.createDiv({ cls: 'gtd-stats-row' });
-			row.style.display = 'flex';
-			row.style.alignItems = 'center';
-			row.style.gap = '8px';
-			row.style.padding = '8px 0';
-			row.style.borderBottom = '1px solid var(--background-modifier-border)';
-			row.style.cursor = 'pointer';
-			row.style.transition = 'background 0.12s';
 
 			// Color dot
 			const dot = row.createEl('span');

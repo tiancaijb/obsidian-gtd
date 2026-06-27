@@ -868,6 +868,46 @@
 	font-weight: 600;
 }
 
+/* ── Period selector ── */
+
+.gtd-stats-period-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 8px;
+}
+
+.gtd-stats-period-btn {
+	padding: 3px 8px;
+	border: 1px solid var(--gtd-border);
+	border-radius: var(--gtd-radius-sm);
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	font-size: 11px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: var(--gtd-font-sans);
+	transition: all 0.12s;
+}
+.gtd-stats-period-btn:hover {
+	border-color: var(--text-muted);
+	color: var(--text-normal);
+}
+.gtd-stats-period-btn.active {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+/* ── Date range label ── */
+
+.gtd-stats-range {
+	font-size: 11px;
+	color: var(--text-muted);
+	margin-bottom: 14px;
+	font-family: var(--gtd-font-mono);
+}
+
 .gtd-stats-refresh {
 	background: var(--gtd-surface);
 	border: 1px solid var(--gtd-border);
