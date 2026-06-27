@@ -8,6 +8,8 @@ import {
 	getPomodoroState, startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro,
 	formatPomodoroTime, PomodoroPhase,
 } from '../utils/pomodoro';
+import { TIMELINE_VIEW_TYPE } from './timeline-view';
+import { STATS_VIEW_TYPE } from './stats-view';
 
 export const AGENDA_VIEW_TYPE = 'gtd-agenda';
 
@@ -68,6 +70,7 @@ export class AgendaView extends ItemView {
 		el.addClass('gtd-agenda');
 
 		this.buildCaptureBar(el);
+		this.buildNavBar(el);
 		this.buildPomodoroSection(el);
 		this.buildTimerBar(el);
 		const tasks = await this.scanVault();
@@ -150,6 +153,38 @@ export class AgendaView extends ItemView {
 			this.timerBarEl.setText(`T ${Math.floor(totalMin / 60)}h ${totalMin % 60}m`);
 			this.timerBarEl.addClass('gtd-timer-active');
 		}
+	}
+
+	// ── Navigation toolbar ──
+
+	private buildNavBar(el: HTMLElement) {
+		const nav = el.createDiv({ cls: 'gtd-nav-bar' });
+		const L = () => this.settings.lang;
+
+		const openView = (type: string) => {
+			const existing = this.app.workspace.getLeavesOfType(type);
+			if (existing.length > 0) {
+				this.app.workspace.revealLeaf(existing[0]!);
+			} else {
+				const leaf = this.app.workspace.getRightLeaf(false);
+				if (leaf) {
+					leaf.setViewState({ type });
+					this.app.workspace.revealLeaf(leaf);
+				}
+			}
+		};
+
+		const tlBtn = nav.createEl('button', {
+			cls: 'gtd-nav-btn',
+			text: t('timelineTitle', L()),
+		});
+		tlBtn.addEventListener('click', () => openView(TIMELINE_VIEW_TYPE));
+
+		const stBtn = nav.createEl('button', {
+			cls: 'gtd-nav-btn',
+			text: t('statsTitle', L()),
+		});
+		stBtn.addEventListener('click', () => openView(STATS_VIEW_TYPE));
 	}
 
 	// ── Capture bar at the top ──
