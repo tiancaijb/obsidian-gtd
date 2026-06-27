@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownView } from 'obsidian';
 import { t, Lang } from '../utils/i18n';
 import { parseTaskLines } from '../utils/parser';
 import { ClockRecord, extractClockRecords, formatDuration as fmtClock } from '../utils/clock-parser';
-import { todayStr, formatDate, isThisWeek, isThisMonth, getWeekStart, getMonthPeriodStart } from '../utils/date-utils';
+import { formatDate, getWeekStart, getMonthPeriodStart } from '../utils/date-utils';
 
 export const STATS_VIEW_TYPE = 'gtd-stats';
 
@@ -44,16 +44,16 @@ export class StatsView extends ItemView {
 	getIcon(): string { return 'bar-chart'; }
 
 	async onOpen() {
-		this.loadData();
+		void this.loadData();
 	}
 
 	async refresh() {
-		this.loadData();
+		void this.loadData();
 	}
 
 	updateSettings(lang: Lang) {
 		this.lang = lang;
-		this.loadData();
+		void this.loadData();
 	}
 
 	/** Return [startDate, endDate] inclusive for the selected period */
@@ -149,7 +149,7 @@ export class StatsView extends ItemView {
 			});
 			btn.addEventListener('click', () => {
 				this.period = p.key;
-				this.loadData();
+				void this.loadData();
 			});
 		}
 
@@ -231,7 +231,7 @@ export class StatsView extends ItemView {
 
 		const pieContainer = container.createDiv({ cls: 'gtd-stats-pie' });
 
-		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		const svg = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		svg.setAttribute('width', String(SIZE));
 		svg.setAttribute('height', String(SIZE));
 		svg.setAttribute('viewBox', '0 0 ' + SIZE + ' ' + SIZE);
@@ -250,7 +250,7 @@ export class StatsView extends ItemView {
 
 			if (angle > Math.PI * 2 - 0.001) {
 				// Full circle (single task) — use <circle> element
-				const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+				const circle = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'circle');
 				circle.setAttribute('cx', String(CX));
 				circle.setAttribute('cy', String(CY));
 				circle.setAttribute('r', String(R));
@@ -266,7 +266,7 @@ export class StatsView extends ItemView {
 				const large = angle > Math.PI ? 1 : 0;
 				const d = 'M' + CX + ',' + CY + ' L' + x1 + ',' + y1 + ' A' + R + ',' + R + ' 0 ' + large + ' 1 ' + x2 + ',' + y2 + ' Z';
 
-				const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+				const path = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'path');
 				path.setAttribute('d', d);
 				path.setAttribute('fill', color);
 				path.setAttribute('stroke', 'var(--background-primary)');
@@ -298,7 +298,7 @@ export class StatsView extends ItemView {
 				const file = this.app.vault.getAbstractFileByPath(st.filePath);
 				if (file instanceof TFile) {
 					const leaf = this.app.workspace.getLeaf(false);
-					await leaf.openFile(file, { active: true });
+					void leaf.openFile(file, { active: true });
 					const view = leaf.view;
 					if (view instanceof MarkdownView) {
 						view.editor.setCursor(st.line, 0);
@@ -312,8 +312,6 @@ export class StatsView extends ItemView {
 
 		// ── Export CSV ──
 		const exportRow = container.createDiv({ cls: 'gtd-stats-export' });
-		exportRow.style.marginTop = '16px';
-		exportRow.style.textAlign = 'center';
 
 		const csvBtn = exportRow.createEl('button', {
 			text: t('exportCsv', this.lang),
@@ -333,13 +331,10 @@ export class StatsView extends ItemView {
 			}
 			const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
 			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
+			const a = activeDocument.createElement('a');
 			a.href = url;
 			a.download = 'gtd-time-stats.csv';
-			a.style.display = 'none';
-			document.body.appendChild(a);
 			a.click();
-			document.body.removeChild(a);
 			URL.revokeObjectURL(url);
 			new Notice('CSV ' + t('downloaded', this.lang));
 		});

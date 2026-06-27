@@ -44,7 +44,7 @@ export class GtdSettingTab extends PluginSettingTab {
 
 		const L = () => this.plugin.settings.lang;
 
-		containerEl.createEl('h2', { text: t('settingsTitle', L()) });
+		new Setting(containerEl).setName(t('settingsTitle', L())).setHeading();
 
 		// ── Theme ──
 		new Setting(containerEl).setName(t('settingsAppearance', L())).setHeading();

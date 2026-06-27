@@ -2,7 +2,7 @@
 	"id": "gtd-workflow",
 	"name": "GTD Workflow",
 	"version": "0.1.1",
-	"minAppVersion": "1.7.0",
+	"minAppVersion": "1.7.2",
 	"description": "Org-mode style GTD workflow: TODO/DONE, priorities, scheduled/deadline dates, agenda view, quick capture.",
 	"author": "tiancaijb",
 	"authorUrl": "",

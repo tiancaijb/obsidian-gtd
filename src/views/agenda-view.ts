@@ -6,7 +6,6 @@ import { GtdPluginSettings } from '../settings';
 import { t, groupTitles } from '../utils/i18n';
 import {
 	getPomodoroState, startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro,
-	formatPomodoroTime,
 } from '../utils/pomodoro';
 import { TIMELINE_VIEW_TYPE } from './timeline-view';
 import { STATS_VIEW_TYPE } from './stats-view';
@@ -58,7 +57,7 @@ export class AgendaView extends ItemView {
 
 	updateSettings(settings: GtdPluginSettings) {
 		this.settings = settings;
-		this.refresh();
+		void this.refresh();
 	}
 
 	private timerBarEl: HTMLElement | null = null;
@@ -82,10 +81,10 @@ export class AgendaView extends ItemView {
 		if (!this.pomodoroEl) return;
 		const s = getPomodoroState();
 		if (s.phase === 'idle') {
-			this.pomodoroEl.style.display = 'none';
+			this.pomodoroEl.addClass('gtd-hidden');
 			return;
 		}
-		this.pomodoroEl.style.display = 'block';
+		this.pomodoroEl.removeClass('gtd-hidden');
 		const pct = s.phase === 'focus'
 			? (s.secondsRemaining / (25 * 60)) * 100
 			: (s.secondsRemaining / (5 * 60)) * 100;
@@ -228,7 +227,7 @@ export class AgendaView extends ItemView {
 				new Notice(`Captured → ${inboxPath}`);
 				input.value = '';
 				prioritySel.value = '';
-				await this.refresh();
+				void this.refresh();
 			} catch (err) {
 				new Notice(`Capture failed: ${err}`);
 			}
@@ -371,7 +370,7 @@ export class AgendaView extends ItemView {
 						fileLines.splice(entry.task.line, end - entry.task.line + 1, ...serLines);
 						await this.app.vault.modify(entry.file, fileLines.join('\n'));
 					}
-					await this.refresh();
+					void this.refresh();
 				});
 
 				// Timer button
@@ -393,7 +392,7 @@ export class AgendaView extends ItemView {
 						this.timerAPI.stopAndLog(entry.file.path, entry.task.line);
 						timerBtn.setText('▶');
 						timerBtn.removeClass('gtd-timer-active');
-						this.refresh();
+						void this.refresh();
 					} else {
 						// Different task: stop old (with log), start new
 						const oldCur = this.timerAPI.getCurrent();
@@ -426,7 +425,7 @@ export class AgendaView extends ItemView {
 						} else if (curPomo.phase === 'focus') {
 							pausePomodoro();
 						}
-						this.refresh();
+						void this.refresh();
 						return;
 					}
 					// Start fresh pomodoro for this task
@@ -436,7 +435,7 @@ export class AgendaView extends ItemView {
 						this.timerAPI.stopAndLog(curTimer.filePath, curTimer.line);
 					}
 					startPomodoro(entry.file.path, entry.task.line);
-					this.refresh();
+					void this.refresh();
 				});
 
 				// Priority badge (no #)
@@ -452,7 +451,7 @@ export class AgendaView extends ItemView {
 				if (entry.task.checked) textEl.addClass('gtd-done');
 
 				// File link
-				const link = row.createEl('a', { cls: 'gtd-file-link', text: entry.file.basename });
+				row.createEl('a', { cls: 'gtd-file-link', text: entry.file.basename });
 
 				// No date display in agenda view (grouping is sufficient)
 			}

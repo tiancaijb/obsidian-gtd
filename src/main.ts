@@ -10,7 +10,7 @@ import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
 import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, formatClockLine, setTickCallback } from './utils/timer';
-import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase } from './utils/pomodoro';
+import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState } from './utils/pomodoro';
 
 const PRIORITIES: (Priority | null)[] = ['A', 'B', 'C', null];
 
@@ -48,7 +48,7 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'gtd-cycle-priority',
-			name: 'Cycle priority ↑ (A → B → C → none)',
+			name: 'Cycle priority up (A to B to C to none)',
 			editorCallback: (editor: Editor) => {
 				this.modifyCurrentLine(editor, (task) => {
 					const idx = PRIORITIES.indexOf(task.priority);
@@ -59,7 +59,7 @@ export default class OrgGtdPlugin extends Plugin {
 		});
 		this.addCommand({
 			id: 'gtd-cycle-priority-down',
-			name: 'Cycle priority ↓ (none → C → B → A)',
+			name: 'Cycle priority down (none to C to B to A)',
 			editorCallback: (editor: Editor) => {
 				this.modifyCurrentLine(editor, (task) => {
 					const idx = PRIORITIES.indexOf(task.priority);
@@ -71,12 +71,12 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'gtd-set-scheduled',
-			name: 'Set SCHEDULED date',
+			name: 'Set scheduled date',
 			callback: async () => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (!view) { new Notice('No active editor'); return; }
 				const task = parseTaskLine(view.editor.getLine(view.editor.getCursor().line), 0);
-				if (!task) { new Notice('Not a GTD task'); return; }
+				if (!task) { new Notice('Not a gtd task'); return; }
 
 				const modal = new DatePickerModal(this.app, 'Set SCHEDULED', task.scheduled, this.settings.lang);
 				modal.open();
@@ -92,12 +92,12 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'gtd-set-deadline',
-			name: 'Set DEADLINE date',
+			name: 'Set deadline date',
 			callback: async () => {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (!view) { new Notice('No active editor'); return; }
 				const task = parseTaskLine(view.editor.getLine(view.editor.getCursor().line), 0);
-				if (!task) { new Notice('Not a GTD task'); return; }
+				if (!task) { new Notice('Not a gtd task'); return; }
 
 				const modal = new DatePickerModal(this.app, 'Set DEADLINE', task.deadline, this.settings.lang);
 				modal.open();
@@ -177,17 +177,17 @@ export default class OrgGtdPlugin extends Plugin {
 					(leaves[0]!.view as unknown as AgendaView).refreshPomodoro();
 				}
 			},
-			(phase: PomodoroPhase, st: any) => {
+			(phase: PomodoroPhase, ps: PomodoroState) => {
 				const name = phase === 'focus' ? 'Focus' : phase === 'shortBreak' ? 'Break' : 'Long break';
-				new Notice(`🍅 ${name} finished!`);
+				new Notice('Pomodoro ' + name + ' finished!');
 				if ('Notification' in window && Notification.permission === 'granted') {
 					new Notification('GTD Pomodoro', { body: `${name} finished!` });
 				}
 				// Write CLOCK record when focus ends
-				if (phase === 'focus' && st.taskFilePath && st.taskLine !== null && st.focusStartTime > 0) {
+				if (phase === 'focus' && ps.taskFilePath !== null && ps.taskLine !== null && typeof ps.focusStartTime === 'number' && ps.focusStartTime > 0) {
 					const endDate = new Date();
-					const startDate = new Date(st.focusStartTime);
-					this.appendClockLog(st.taskFilePath, st.taskLine, startDate, endDate);
+					const startDate = new Date(ps.focusStartTime);
+					void this.appendClockLog(ps.taskFilePath, ps.taskLine, startDate, endDate);
 				}
 			},
 		);
@@ -304,7 +304,7 @@ export default class OrgGtdPlugin extends Plugin {
 			}
 		});
 
-		new Notice('GTD: loaded');
+		new Notice('Gtd: loaded');
 	}
 
 	modifyCurrentLine(editor: Editor, modify: (t: ParsedTask) => ParsedTask) {
@@ -437,7 +437,7 @@ export default class OrgGtdPlugin extends Plugin {
 			const task = parseTaskLines(lines, line);
 			if (!task) return;
 
-			const clockLine = formatClockLine(start, end, metaKeywords[this.settings.lang]!.clock);
+			const clockLine = formatClockLine(start, end, metaKeywords[this.settings.lang].clock);
 			const insertAt = line + task.metaLineCount + 1;
 			lines.splice(insertAt, 0, clockLine);
 			await this.app.vault.adapter.write(filePath, lines.join('\n'));
@@ -473,8 +473,8 @@ export default class OrgGtdPlugin extends Plugin {
 
 	/** Switch the body-level theme class for GTD */
 	applyTheme() {
-		document.body.classList.remove('gtd-theme-basic', 'gtd-theme-premium-dark');
-		document.body.classList.add('gtd-theme-' + this.settings.theme);
+		activeDocument.body.classList.remove('gtd-theme-basic', 'gtd-theme-premium-dark');
+		activeDocument.body.classList.add('gtd-theme-' + this.settings.theme);
 	}
 
 	private syncPomodoroConfig() {

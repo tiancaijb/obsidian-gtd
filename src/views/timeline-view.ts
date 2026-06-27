@@ -41,16 +41,16 @@ export class TimelineView extends ItemView {
 	getIcon(): string { return 'clock'; }
 
 	async onOpen() {
-		this.loadData();
+		void this.loadData();
 	}
 
 	async refresh() {
-		this.loadData();
+		void this.loadData();
 	}
 
 	updateSettings(lang: Lang) {
 		this.lang = lang;
-		this.loadData();
+		void this.loadData();
 	}
 
 	private async loadData() {
@@ -61,7 +61,6 @@ export class TimelineView extends ItemView {
 		// ── Toolbar ──
 		const toolbar = container.createDiv({ cls: 'gtd-timeline-toolbar' });
 		const prevBtn = toolbar.createEl('button', { text: '‹', cls: 'gtd-timeline-nav' });
-		const dateLabel = toolbar.createEl('span', { text: this.dateStr, cls: 'gtd-timeline-date-label' });
 		const nextBtn = toolbar.createEl('button', { text: '›', cls: 'gtd-timeline-nav' });
 		const todayBtn = toolbar.createEl('button', { text: t('today', this.lang), cls: 'gtd-timeline-today-btn' });
 
@@ -69,17 +68,17 @@ export class TimelineView extends ItemView {
 			const d = new Date(this.dateStr);
 			d.setDate(d.getDate() - 1);
 			this.dateStr = formatDate(d);
-			this.loadData();
+			void this.loadData();
 		});
 		nextBtn.addEventListener('click', () => {
 			const d = new Date(this.dateStr);
 			d.setDate(d.getDate() + 1);
 			this.dateStr = formatDate(d);
-			this.loadData();
+			void this.loadData();
 		});
 		todayBtn.addEventListener('click', () => {
 			this.dateStr = todayStr();
-			this.loadData();
+			void this.loadData();
 		});
 
 		// ── Scan files ──
@@ -152,20 +151,18 @@ export class TimelineView extends ItemView {
 			const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
 			label.textContent = displayH + ampm;
 
-			const gridline = row.createEl('span', { cls: 'gtd-timeline-gridline' });
 		}
 
 		// ── Blocks (positioned absolutely within timeline) ──
-		const maxMin = Math.max(...entries.map((e) => e.record.durationMin), 1);
 
 		// We use a wrapper inside timeline for absolute positioning
 		const track = timeline.createDiv({ cls: 'gtd-timeline-track' });
-		track.style.position = 'absolute';
-		track.style.top = '0';
-		track.style.left = '0';
-		track.style.right = '0';
-		track.style.bottom = '0';
-		track.style.pointerEvents = 'none';
+		// track styling via CSS class
+		// track styling via CSS class
+		// track styling via CSS class
+		// track styling via CSS class
+		// track styling via CSS class
+		// track styling via CSS class
 
 		for (const entry of entries) {
 			const startH = entry.record.start.getHours() + entry.record.start.getMinutes() / 60;
@@ -181,7 +178,6 @@ export class TimelineView extends ItemView {
 			block.style.top = topPx + 'px';
 			block.style.height = heightPx + 'px';
 			block.style.background = hashColor(entry.taskText);
-			block.style.pointerEvents = 'auto';
 
 			const label = block.createEl('span', { cls: 'gtd-timeline-block-label' });
 			label.textContent = fmtClock(entry.record.durationMin) + '  ' + entry.taskText;

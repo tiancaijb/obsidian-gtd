@@ -103,7 +103,7 @@ export class CaptureModal extends Modal {
 			}
 
 			const prio = this.selectedPrio ? `  [#${this.selectedPrio}]` : '';
-			const kw = metaKeywords[this.lang]!;
+			const kw = metaKeywords[this.lang];
 			const lines = [`- [ ] ${text}${prio}`];
 			if (this.scheduledDate) lines.push(`  ${kw.scheduled}: <${this.scheduledDate}>`);
 			if (this.deadlineDate) lines.push(`  ${kw.deadline}: <${this.deadlineDate}>`);
