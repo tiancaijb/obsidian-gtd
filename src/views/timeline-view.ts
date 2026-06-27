@@ -185,7 +185,7 @@ export class TimelineView extends ItemView {
 			block.addEventListener('click', () => {
 				const file = this.app.vault.getAbstractFileByPath(entry.filePath);
 				if (file instanceof TFile) {
-					this.app.workspace.getLeaf(false).openFile(file);
+					void this.app.workspace.getLeaf(false).openFile(file);
 				}
 			});
 		}

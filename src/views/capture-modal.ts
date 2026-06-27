@@ -76,7 +76,7 @@ export class CaptureModal extends Modal {
 			attr: { type: 'date' },
 		});
 		schedInput.addEventListener('change', () => { this.scheduledDate = schedInput.value; });
-		schedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCapture(); });
+		schedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') void doCapture(); });
 
 		// DEADLINE
 		const deadGroup = dateRow.createDiv({ cls: 'gtd-capture-date-group' });
@@ -86,7 +86,7 @@ export class CaptureModal extends Modal {
 			attr: { type: 'date' },
 		});
 		deadInput.addEventListener('change', () => { this.deadlineDate = deadInput.value; });
-		deadInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doCapture(); });
+		deadInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') void doCapture(); });
 
 		// Submit
 		const submitBtn = contentEl.createEl('button', {
@@ -126,7 +126,7 @@ export class CaptureModal extends Modal {
 
 		// Global keyboard
 		this.scope.register([], 'Enter', () => {
-			doCapture();
+			void doCapture();
 			return false;
 		});
 		this.scope.register([], 'Escape', () => {

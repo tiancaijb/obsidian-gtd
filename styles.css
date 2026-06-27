@@ -637,7 +637,7 @@
 	background: var(--gtd-prio-a-bg);
 	color: var(--gtd-prio-a-text);
 	margin-right: auto;
-	border: 1px solid var(--gtd-prio-a-text) !important;
+	border: 1px solid var(--gtd-prio-a-text);
 }
 .gtd-dp-set-btn {
 	background: var(--interactive-accent);
@@ -646,7 +646,7 @@
 .gtd-dp-cancel {
 	background: var(--background-secondary);
 	color: var(--text-muted);
-	border: 1px solid var(--gtd-border) !important;
+	border: 1px solid var(--gtd-border);
 }
 
 /* ════════════════════════════════════════

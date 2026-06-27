@@ -116,7 +116,7 @@ export class AgendaView extends ItemView {
 				.addEventListener('click', () => { pausePomodoro(); this.refreshPomodoro(); });
 		}
 		ctrl.createEl('button', { text: 'Stop' })
-			.addEventListener('click', () => { stopPomodoro(); this.refresh(); });
+			.addEventListener('click', () => { void stopPomodoro(); void this.refresh(); });
 	}
 
 	private buildPomodoroSection(el: HTMLElement) {
@@ -167,7 +167,7 @@ export class AgendaView extends ItemView {
 			} else {
 				const leaf = this.app.workspace.getRightLeaf(false);
 				if (leaf) {
-					leaf.setViewState({ type });
+				void leaf.setViewState({ type });
 					this.app.workspace.revealLeaf(leaf);
 				}
 			}
@@ -343,7 +343,7 @@ export class AgendaView extends ItemView {
 				// Click anywhere on the item to navigate (except checkbox)
 				item.addEventListener('click', (e) => {
 					if ((e.target as HTMLElement).tagName === 'INPUT') return; // checkbox click
-					this.navigateToTask(entry);
+					void this.navigateToTask(entry);
 				});
 
 				// Row: checkbox + priority + text + file
@@ -368,7 +368,7 @@ export class AgendaView extends ItemView {
 						const serLines = serialized.split('\n');
 						const end = entry.task.line + task.metaLineCount;
 						fileLines.splice(entry.task.line, end - entry.task.line + 1, ...serLines);
-						await this.app.vault.modify(entry.file, fileLines.join('\n'));
+						void this.app.vault.modify(entry.file, fileLines.join('\n'));
 					}
 					void this.refresh();
 				});
