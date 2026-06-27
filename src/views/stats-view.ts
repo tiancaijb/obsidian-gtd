@@ -238,8 +238,6 @@ export class StatsView extends ItemView {
 		pieContainer.appendChild(svg);
 
 		const legend = pieContainer.createDiv({ cls: 'gtd-stats-legend' });
-		legend.style.flex = '1';
-		legend.style.minWidth = '0';
 
 		for (let i = 0; i < sorted.length; i++) {
 			const st = sorted[i]!;

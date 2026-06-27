@@ -1,7 +1,7 @@
 import { App, Modal } from 'obsidian';
 import { t } from '../utils/i18n';
 
-export type DatePickerResult = 'remove' | string;
+export type DatePickerResult = string;
 
 /**
  * Date picker: text input (20260630) + single 📅 icon for calendar popup.
