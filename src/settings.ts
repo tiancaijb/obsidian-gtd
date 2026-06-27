@@ -46,24 +46,6 @@ export class GtdSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl).setName(t('settingsTitle', L())).setHeading();
 
-		// ── Theme ──
-		new Setting(containerEl).setName(t('settingsAppearance', L())).setHeading();
-
-		new Setting(containerEl)
-			.setName(t('themeLabel', L()))
-			.setDesc(t('themeDesc', L()))
-			.addDropdown((dd) =>
-				dd
-					.addOption('basic', t('themeBasic', L()))
-					.addOption('premium-dark', t('themePremiumDark', L()) + ' (Premium)')
-					.setValue(this.plugin.settings.theme)
-					.onChange(async (v) => {
-						this.plugin.settings.theme = v;
-						await this.plugin.saveSettings();
-						this.plugin.applyTheme();
-					}),
-			);
-
 		// ── GTD Folder ──
 		new Setting(containerEl).setName(t('gtdFolderTitle', L())).setHeading();
 
