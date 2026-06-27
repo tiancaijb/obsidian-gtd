@@ -1,0 +1,11 @@
+{
+	"id": "obsidian-gtd",
+	"name": "GTD",
+	"version": "0.1.0",
+	"minAppVersion": "1.0.0",
+	"description": "Org-mode style GTD workflow for Obsidian: TODO/DONE, priorities, scheduled/deadline dates, agenda view, quick capture.",
+	"author": "wangy",
+	"authorUrl": "",
+	"fundingUrl": "",
+	"isDesktopOnly": false
+}
