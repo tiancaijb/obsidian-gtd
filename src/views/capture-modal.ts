@@ -122,7 +122,7 @@ export class CaptureModal extends Modal {
 			}
 		};
 
-		submitBtn.addEventListener('click', doCapture);
+		submitBtn.addEventListener('click', () => { void doCapture(); });
 
 		// Global keyboard
 		this.scope.register([], 'Enter', () => {

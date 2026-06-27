@@ -233,7 +233,7 @@ export class AgendaView extends ItemView {
 			}
 		};
 
-		addBtn.addEventListener('click', doCapture);
+		addBtn.addEventListener('click', () => { void doCapture(); });
 		input.addEventListener('keydown', (e) => {
 			if (e.key === 'Enter') { void doCapture(); };
 		});
@@ -355,7 +355,7 @@ export class AgendaView extends ItemView {
 					attr: { type: 'checkbox' },
 				});
 				chk.checked = entry.task.checked;
-				chk.addEventListener('change', async () => {
+				chk.addEventListener('change', () => { void (async () => {
 					const fileContent = await this.app.vault.read(entry.file);
 					const fileLines = fileContent.split('\n');
 					const task = parseTaskLines(fileLines, entry.task.line);
@@ -371,7 +371,7 @@ export class AgendaView extends ItemView {
 						void this.app.vault.modify(entry.file, fileLines.join('\n'));
 					}
 					void this.refresh();
-				});
+				})(); });
 
 				// Timer button
 				const timerBtn = row.createEl('span', {

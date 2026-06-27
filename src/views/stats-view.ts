@@ -128,7 +128,7 @@ export class StatsView extends ItemView {
 			text: '↻',
 			cls: 'gtd-stats-refresh',
 		});
-		refreshBtn.addEventListener('click', () => this.loadData());
+		refreshBtn.addEventListener('click', () => { void this.loadData(); });
 
 		// ── Period selector ──
 		const periodRow = container.createDiv({ cls: 'gtd-stats-period-row' });
