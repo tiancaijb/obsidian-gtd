@@ -213,7 +213,6 @@ export class StatsView extends ItemView {
 
 		const sorted = [...taskMap.values()].sort((a, b) => b.totalMin - a.totalMin);
 		const grandTotal = sorted.reduce((s, t) => s + t.totalMin, 0);
-		const maxTaskMin = sorted[0]!.totalMin;
 
 		// ── Grand total ──
 		const totalBar = container.createDiv({ cls: 'gtd-stats-total' });
@@ -221,85 +220,91 @@ export class StatsView extends ItemView {
 			text: t('totalTime', this.lang) + ': ' + fmtClock(grandTotal),
 		});
 
-		// ── Per-task list ──
-		const list = container.createDiv({ cls: 'gtd-stats-list' });
+		// ── Pie chart ──
+		const SIZE = 160;
+		const CX = SIZE / 2;
+		const CY = SIZE / 2;
+		const R = 68;
 
-		for (const st of sorted) {
-			const pct = Math.round((st.totalMin / grandTotal) * 100);
-			const barW = Math.max(3, (st.totalMin / maxTaskMin) * 100);
-			const color = hashColor(st.taskText);
+		// Build SVG arcs — accumulate angles
+		let accAngle = -Math.PI / 2; // start from top
 
-			const row = list.createDiv({ cls: 'gtd-stats-row' });
+		const pieContainer = container.createDiv({ cls: 'gtd-stats-pie' });
+		pieContainer.style.display = 'flex';
+		pieContainer.style.alignItems = 'center';
+		pieContainer.style.gap = '16px';
+		pieContainer.style.marginBottom = '16px';
 
-			// Color dot
-			const dot = row.createEl('span');
-			dot.style.width = '10px';
-			dot.style.height = '10px';
+		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		svg.setAttribute('width', String(SIZE));
+		svg.setAttribute('height', String(SIZE));
+		svg.setAttribute('viewBox', '0 0 ' + SIZE + ' ' + SIZE);
+		pieContainer.appendChild(svg);
+
+		const legend = pieContainer.createDiv({ cls: 'gtd-stats-legend' });
+		legend.style.flex = '1';
+		legend.style.minWidth = '0';
+
+		for (let i = 0; i < sorted.length; i++) {
+			const st = sorted[i]!;
+			const pct = st.totalMin / grandTotal;
+			const angle = pct * Math.PI * 2;
+			const endAngle = accAngle + angle;
+
+			if (angle > 0.001) {
+				const x1 = CX + R * Math.cos(accAngle);
+				const y1 = CY + R * Math.sin(accAngle);
+				const x2 = CX + R * Math.cos(endAngle);
+				const y2 = CY + R * Math.sin(endAngle);
+				const large = angle > Math.PI ? 1 : 0;
+				const d = 'M' + CX + ',' + CY + ' L' + x1 + ',' + y1 + ' A' + R + ',' + R + ' 0 ' + large + ' 1 ' + x2 + ',' + y2 + ' Z';
+
+				const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+				path.setAttribute('d', d);
+				path.setAttribute('fill', hashColor(st.taskText));
+				path.setAttribute('stroke', 'var(--background-primary)');
+				path.setAttribute('stroke-width', '1.5');
+				svg.appendChild(path);
+			}
+
+			accAngle = endAngle;
+
+			// Legend row
+			const lrow = legend.createDiv({ cls: 'gtd-stats-legend-row' });
+
+			const dot = lrow.createEl('span');
+			dot.style.width = '8px';
+			dot.style.height = '8px';
 			dot.style.borderRadius = '50%';
-			dot.style.background = color;
+			dot.style.background = hashColor(st.taskText);
 			dot.style.flexShrink = '0';
 
-			// Left column: task name + metadata
-			const infoCol = row.createDiv();
-			infoCol.style.flex = '1';
-			infoCol.style.minWidth = '0';
-			infoCol.style.overflow = 'hidden';
-
-			const nameEl = infoCol.createEl('span', { text: st.taskText });
-			nameEl.style.display = 'block';
-			nameEl.style.fontSize = '13px';
-			nameEl.style.fontWeight = '600';
+			const nameEl = lrow.createEl('span', { text: st.taskText });
+			nameEl.style.flex = '1';
 			nameEl.style.overflow = 'hidden';
 			nameEl.style.textOverflow = 'ellipsis';
 			nameEl.style.whiteSpace = 'nowrap';
+			nameEl.style.fontSize = '12px';
+			nameEl.style.fontWeight = '500';
 
-			const metaEl = infoCol.createEl('span', {
-				text: st.sessions + ' ' + t('sessions', this.lang),
-			});
-			metaEl.style.fontSize = '10px';
-			metaEl.style.color = 'var(--text-muted)';
-
-			// Right column: duration + pct + bar
-			const rightCol = row.createDiv();
-			rightCol.style.display = 'flex';
-			rightCol.style.alignItems = 'center';
-			rightCol.style.gap = '6px';
-			rightCol.style.flexShrink = '0';
-
-			const durEl = rightCol.createEl('span', {
+			const durEl = lrow.createEl('span', {
 				text: fmtClock(st.totalMin),
 			});
-			durEl.style.fontSize = '13px';
-			durEl.style.fontWeight = '700';
-			durEl.style.fontFamily = 'monospace';
-			durEl.style.minWidth = '50px';
+			durEl.style.fontSize = '12px';
+			durEl.style.fontWeight = '600';
+			durEl.style.fontFamily = 'var(--gtd-font-mono)';
 			durEl.style.textAlign = 'right';
+			durEl.style.minWidth = '50px';
 
-			const pctEl = rightCol.createEl('span', {
-				text: pct + '%',
+			const pctEl = lrow.createEl('span', {
+				text: Math.round(pct * 100) + '%',
 			});
 			pctEl.style.fontSize = '11px';
 			pctEl.style.color = 'var(--text-muted)';
-			pctEl.style.minWidth = '32px';
+			pctEl.style.minWidth = '34px';
 			pctEl.style.textAlign = 'right';
 
-			const barOuter = rightCol.createEl('span');
-			barOuter.style.flex = '0 0 50px';
-			barOuter.style.height = '8px';
-			barOuter.style.background = 'var(--background-modifier-border)';
-			barOuter.style.borderRadius = '4px';
-			barOuter.style.overflow = 'hidden';
-
-			const barInner = barOuter.createEl('span');
-			barInner.style.display = 'block';
-			barInner.style.height = '100%';
-			barInner.style.width = barW + '%';
-			barInner.style.background = color;
-			barInner.style.borderRadius = '4px';
-			barInner.style.opacity = '0.7';
-
-			// Click handler — open file and scroll to task line
-			row.addEventListener('click', async () => {
+			lrow.addEventListener('click', async () => {
 				const file = this.app.vault.getAbstractFileByPath(st.filePath);
 				if (file instanceof TFile) {
 					const leaf = this.app.workspace.getLeaf(false);

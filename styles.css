@@ -908,6 +908,27 @@
 	font-family: var(--gtd-font-mono);
 }
 
+/* ── Pie chart legend ── */
+
+.gtd-stats-legend {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.gtd-stats-legend-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 4px;
+	border-radius: var(--gtd-radius-sm);
+	cursor: pointer;
+	transition: background 0.12s;
+}
+.gtd-stats-legend-row:hover {
+	background: var(--gtd-surface-hover);
+}
+
 .gtd-stats-refresh {
 	background: var(--gtd-surface);
 	border: 1px solid var(--gtd-border);
