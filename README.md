@@ -1,92 +1,76 @@
-# Obsidian Sample Plugin
+# GTD Plugin for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+一个基于 GTD 工作流的 Obsidian 插件，使用 Markdown 复选框语法配合 org-mode 风格元数据。
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+A GTD workflow plugin for Obsidian, using Markdown checkbox syntax with org-mode-style metadata.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
+---
 
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and outputs a Notice on click.
-- Registers a global interval which logs 'setInterval' to the console.
+## 功能 Features
 
-## First time developing plugins?
+- **GTD 文件夹体系** — 自动创建 `gtd/` 文件夹，含收集箱、下一步行动、等待中、将来也许、项目
+- **Agenda 视图** — 右侧边栏，按今天/本周/本月/未来分组显示任务
+- **快速捕获** — `Ctrl+Shift+C` 随时随地捕获想法到收件箱
+- **任务计时** — 开始/暂停/停止计时，自动写入 CLOCK 记录
+- **番茄钟** — 内置番茄钟，专注/休息循环，完成自动记录
+- **时间轴** — 24h 时间轴视图，展示每日 CLOCK 记录
+- **耗时统计** — 按任务汇总耗时，含柱状图，支持 CSV 导出
+- **优先级** — `[#A] [#B] [#C]` 行内优先级，`Shift+↑/↓` 循环切换
+- **缩进调整** — `Alt+←/→` 调整任务缩进（含子任务）
+- **中英文切换** — 界面和元数据关键字全支持中英文
 
-Quick starting guide for new plugin devs:
+## 任务格式 Task Format
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `src/main.ts` to `main.js`.
-- Make changes to `src/main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-## Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v18 (`node --version`).
-- `npm i` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint
-
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code.
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-	"fundingUrl": "https://buymeacoffee.com"
-}
+```markdown
+- [ ] 任务描述  [#A]
+  计划: <2026-06-27>
+  截止: <2026-06-30>
+  CLOCK: [2026-06-27 Sat 09:00]--[2026-06-27 Sat 10:30] => 1:30
 ```
 
-If you have multiple URLs, you can also do:
+- 优先级：`[#A]`（高）`[#B]`（中）`[#C]`（低）
+- 日期：`计划:`（计划日期）`截止:`（截止日期）
+- 计时：`CLOCK: [开始]--[结束] => 时长`
 
-```json
-{
-	"fundingUrl": {
-		"Buy Me a Coffee": "https://buymeacoffee.com",
-		"GitHub Sponsor": "https://github.com/sponsors",
-		"Patreon": "https://www.patreon.com/"
-	}
-}
+## 快捷键 Commands
+
+| 命令 | 默认快捷键 |
+|------|-----------|
+| 快速捕获 Quick Capture | `Ctrl+Shift+C` |
+| 切换复选框 Toggle checkbox | `Ctrl+Enter` |
+| 循环优先级 Cycle priority | `Shift+↑` / `Shift+↓` |
+| 缩进调整 Promote/Demote | `Alt+←` / `Alt+→` |
+| 插入任务 Insert task | `Ctrl+Shift+Enter` |
+| 切换计时 Toggle timer | `Ctrl+Shift+T` |
+| 打开 Agenda | |
+| 打开时间轴 Timeline | |
+| 打开统计 Statistics | |
+
+## 视图 Views
+
+- **Agenda** — 右侧边栏。任务按日期分组，内置快速捕获、计时器、番茄钟
+- **Timeline** — 右侧边栏。24h 时间轴，可查看任意一天的 CLOCK 记录
+- **Stats** — 右侧边栏。按任务汇总耗时统计，支持 CSV 导出
+
+## 安装 Installation
+
+### 从社区插件安装
+
+在社区插件中搜索 "GTD"（待提交审核后）
+
+### 手动安装
+
+从 [latest release](https://github.com/tiancaijb/obsidian-gtd/releases) 下载 `main.js`、`styles.css`、`manifest.json`，放入 `.obsidian/plugins/obsidian-gtd/`
+
+### 开发者模式
+
+```bash
+git clone git@github.com:tiancaijb/obsidian-gtd.git
+cd obsidian-gtd
+npm install
+npm run dev
 ```
 
-## API Documentation
+## 许可证 License
 
-See https://docs.obsidian.md
+MIT
