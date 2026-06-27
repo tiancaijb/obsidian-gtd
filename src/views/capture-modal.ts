@@ -118,7 +118,7 @@ export class CaptureModal extends Modal {
 				new Notice('✨ Captured!');
 				this.close();
 			} catch (err) {
-				new Notice(`Error: ${err}`);
+				new Notice("Error: " + String(err));
 			}
 		};
 

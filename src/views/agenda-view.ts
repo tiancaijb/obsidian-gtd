@@ -229,7 +229,7 @@ export class AgendaView extends ItemView {
 				prioritySel.value = '';
 				void this.refresh();
 			} catch (err) {
-				new Notice(`Capture failed: ${err}`);
+				new Notice("Capture failed: " + String(err));
 			}
 		};
 

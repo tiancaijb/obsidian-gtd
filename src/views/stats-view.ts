@@ -145,7 +145,7 @@ export class StatsView extends ItemView {
 		for (const p of periods) {
 			const btn = periodRow.createEl('button', {
 				cls: 'gtd-stats-period-btn' + (this.period === p.key ? ' active' : ''),
-				text: t(p.labelKey as keyof typeof t, this.lang) as string,
+				text: String(t(p.labelKey, this.lang)),
 			});
 			btn.addEventListener('click', () => {
 				this.period = p.key;

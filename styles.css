@@ -914,6 +914,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
+	flex: 1;
+	min-width: 0;
 }
 
 .gtd-stats-legend-row {

@@ -147,7 +147,7 @@ export function serializeTask(task: ParsedTask, lang: Lang = 'zh'): string {
 	line += task.text;
 	if (task.priority) line += `  [#${task.priority}]`;
 
-	const kw = metaKeywords[lang]!;
+	const kw = metaKeywords[lang];
 	const metaLines: string[] = [];
 	if (task.scheduled) metaLines.push(`  ${kw.scheduled}: <${task.scheduled}>`);
 	if (task.deadline) metaLines.push(`  ${kw.deadline}: <${task.deadline}>`);
