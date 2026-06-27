@@ -230,10 +230,6 @@ export class StatsView extends ItemView {
 		let accAngle = -Math.PI / 2; // start from top
 
 		const pieContainer = container.createDiv({ cls: 'gtd-stats-pie' });
-		pieContainer.style.display = 'flex';
-		pieContainer.style.alignItems = 'center';
-		pieContainer.style.gap = '16px';
-		pieContainer.style.marginBottom = '16px';
 
 		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		svg.setAttribute('width', String(SIZE));
@@ -250,8 +246,19 @@ export class StatsView extends ItemView {
 			const pct = st.totalMin / grandTotal;
 			const angle = pct * Math.PI * 2;
 			const endAngle = accAngle + angle;
+			const color = hashColor(st.taskText);
 
-			if (angle > 0.001) {
+			if (angle > Math.PI * 2 - 0.001) {
+				// Full circle (single task) — use <circle> element
+				const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+				circle.setAttribute('cx', String(CX));
+				circle.setAttribute('cy', String(CY));
+				circle.setAttribute('r', String(R));
+				circle.setAttribute('fill', color);
+				circle.setAttribute('stroke', 'var(--background-primary)');
+				circle.setAttribute('stroke-width', '1.5');
+				svg.appendChild(circle);
+			} else if (angle > 0.001) {
 				const x1 = CX + R * Math.cos(accAngle);
 				const y1 = CY + R * Math.sin(accAngle);
 				const x2 = CX + R * Math.cos(endAngle);
@@ -261,7 +268,7 @@ export class StatsView extends ItemView {
 
 				const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 				path.setAttribute('d', d);
-				path.setAttribute('fill', hashColor(st.taskText));
+				path.setAttribute('fill', color);
 				path.setAttribute('stroke', 'var(--background-primary)');
 				path.setAttribute('stroke-width', '1.5');
 				svg.appendChild(path);
@@ -272,37 +279,20 @@ export class StatsView extends ItemView {
 			// Legend row
 			const lrow = legend.createDiv({ cls: 'gtd-stats-legend-row' });
 
-			const dot = lrow.createEl('span');
-			dot.style.width = '8px';
-			dot.style.height = '8px';
-			dot.style.borderRadius = '50%';
+			const dot = lrow.createEl('span', { cls: 'gtd-stats-dot' });
 			dot.style.background = hashColor(st.taskText);
-			dot.style.flexShrink = '0';
 
-			const nameEl = lrow.createEl('span', { text: st.taskText });
-			nameEl.style.flex = '1';
-			nameEl.style.overflow = 'hidden';
-			nameEl.style.textOverflow = 'ellipsis';
-			nameEl.style.whiteSpace = 'nowrap';
-			nameEl.style.fontSize = '12px';
-			nameEl.style.fontWeight = '500';
+			const nameEl = lrow.createEl('span', { cls: 'gtd-stats-name', text: st.taskText });
 
 			const durEl = lrow.createEl('span', {
+				cls: 'gtd-stats-dur',
 				text: fmtClock(st.totalMin),
 			});
-			durEl.style.fontSize = '12px';
-			durEl.style.fontWeight = '600';
-			durEl.style.fontFamily = 'var(--gtd-font-mono)';
-			durEl.style.textAlign = 'right';
-			durEl.style.minWidth = '50px';
 
 			const pctEl = lrow.createEl('span', {
+				cls: 'gtd-stats-pct',
 				text: Math.round(pct * 100) + '%',
 			});
-			pctEl.style.fontSize = '11px';
-			pctEl.style.color = 'var(--text-muted)';
-			pctEl.style.minWidth = '34px';
-			pctEl.style.textAlign = 'right';
 
 			lrow.addEventListener('click', async () => {
 				const file = this.app.vault.getAbstractFileByPath(st.filePath);

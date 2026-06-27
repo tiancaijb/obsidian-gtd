@@ -1,23 +1,25 @@
-# GTD Plugin for Obsidian
+# GTD Workflow Plugin
 
-一个基于 GTD 工作流的 Obsidian 插件，使用 Markdown 复选框语法配合 org-mode 风格元数据。
+[English](#english) | [中文](#中文)
 
-A GTD workflow plugin for Obsidian, using Markdown checkbox syntax with org-mode-style metadata.
+A GTD (Get Things Done) workflow plugin using Markdown checkbox syntax with org-mode-style metadata.
 
 ---
 
-## 功能 Features
+## English
 
-- **GTD 文件夹体系** — 自动创建 `gtd/` 文件夹，含收集箱、下一步行动、等待中、将来也许、项目
-- **Agenda 视图** — 右侧边栏，按今天/本周/本月/未来分组显示任务
-- **快速捕获** — `Ctrl+Shift+C` 随时随地捕获想法到收件箱
-- **任务计时** — 开始/暂停/停止计时，自动写入 CLOCK 记录
-- **番茄钟** — 内置番茄钟，专注/休息循环，完成自动记录
-- **时间轴** — 24h 时间轴视图，展示每日 CLOCK 记录
-- **耗时统计** — 按任务汇总耗时，含柱状图，支持 CSV 导出
-- **优先级** — `[#A] [#B] [#C]` 行内优先级，`Shift+↑/↓` 循环切换
-- **缩进调整** — `Alt+←/→` 调整任务缩进（含子任务）
-- **中英文切换** — 界面和元数据关键字全支持中英文
+### Features
+
+- **GTD folder structure** — auto-creates `gtd/` folder with inbox, next actions, waiting, someday/maybe, projects
+- **Agenda view** — right sidebar showing tasks grouped by today, this week, this month, future
+- **Quick capture** — `Ctrl+Shift+C` to capture ideas to inbox from anywhere
+- **Task timer** — start/pause/stop timer, auto-writes CLOCK records
+- **Pomodoro timer** — focus/break cycles with automatic CLOCK logging
+- **Timeline view** — 24h timeline showing daily CLOCK records
+- **Time statistics** — per-task time aggregation with pie chart and CSV export
+- **Priorities** — `[#A] [#B] [#C]` inline priorities, `Shift+↑/↓` to cycle
+- **Indent** — `Alt+←/→` to promote/demote tasks (with subtasks)
+- **Bilingual** — UI and metadata keywords in Chinese and English
 
 ## 任务格式 Task Format
 

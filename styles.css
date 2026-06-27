@@ -929,6 +929,44 @@
 	background: var(--gtd-surface-hover);
 }
 
+.gtd-stats-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.gtd-stats-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.gtd-stats-dur {
+	font-size: 12px;
+	font-weight: 600;
+	font-family: var(--gtd-font-mono);
+	text-align: right;
+	min-width: 50px;
+}
+
+.gtd-stats-pct {
+	font-size: 11px;
+	color: var(--text-muted);
+	min-width: 34px;
+	text-align: right;
+}
+
+.gtd-stats-pie {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 16px;
+}
+
 .gtd-stats-refresh {
 	background: var(--gtd-surface);
 	border: 1px solid var(--gtd-border);

@@ -47,7 +47,7 @@ export class GtdSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', { text: t('settingsTitle', L()) });
 
 		// ── Theme ──
-		containerEl.createEl('h3', { text: t('settingsAppearance', L()) });
+		new Setting(containerEl).setName(t('settingsAppearance', L())).setHeading();
 
 		new Setting(containerEl)
 			.setName(t('themeLabel', L()))
@@ -65,7 +65,7 @@ export class GtdSettingTab extends PluginSettingTab {
 			);
 
 		// ── GTD Folder ──
-		containerEl.createEl('h3', { text: t('gtdFolderTitle', L()) });
+		new Setting(containerEl).setName(t('gtdFolderTitle', L())).setHeading();
 
 		new Setting(containerEl)
 			.setName(t('baseFolder', L()))
@@ -84,7 +84,7 @@ export class GtdSettingTab extends PluginSettingTab {
 
 
 		// ── Language ──
-		containerEl.createEl('h3', { text: t('settingsLanguage', L()) });
+		new Setting(containerEl).setName(t('settingsLanguage', L())).setHeading();
 
 		new Setting(containerEl)
 			.setName(t('languageLabel', L()))
@@ -102,7 +102,7 @@ export class GtdSettingTab extends PluginSettingTab {
 			);
 
 		// ── Agenda ──
-		containerEl.createEl('h3', { text: t('settingsAgenda', L()) });
+		new Setting(containerEl).setName(t('settingsAgenda', L())).setHeading();
 
 		new Setting(containerEl)
 			.setName(t('weekStartDay', L()))
@@ -158,7 +158,7 @@ export class GtdSettingTab extends PluginSettingTab {
 			);
 
 		// ── Pomodoro ──
-		containerEl.createEl('h3', { text: t('pomodoroTitle', L()) });
+		new Setting(containerEl).setName(t('pomodoroTitle', L())).setHeading();
 
 		new Setting(containerEl)
 			.setName(t('focusMin', L()))
