@@ -81,21 +81,35 @@ export class TimelineView extends ItemView {
 			void this.loadData();
 		});
 
-		// ── Scan files ──
+		// ── Scan files with heading hierarchy ──
 		const entries: ClockWithTask[] = [];
 		for (const file of this.app.vault.getMarkdownFiles()) {
 			const content = await this.app.vault.read(file);
 			const lines = content.split('\n');
 
+			// Track heading stack for parent context
+			const headingStack: string[] = [];
 			let i = 0;
 			while (i < lines.length) {
+				const line = lines[i]!;
+				const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
+				if (headingMatch) {
+					const level = headingMatch[1]!.length;
+					// Clean heading: remove links [[...]] → keep text
+					let headingText = headingMatch[2]!.replace(/\[\[([^\]|]+)\|?\]\]/g, '$1').replace(/\[\[([^\]]+)\]\]/g, '$1');
+					// Pop stack to matching level
+					while (headingStack.length >= level) { headingStack.pop(); }
+					headingStack.push(headingText);
+				}
+
 				const task = parseTaskLines(lines, i);
 				if (task) {
+					const pathPrefix = headingStack.length > 0 ? headingStack.join(' > ') + ' > ' : '';
 					for (let j = i + 1; j < lines.length && j <= i + task.metaLineCount + 10; j++) {
 						const recs = extractClockRecords([lines[j]!]);
 						const dayRecs = filterByDate(recs, this.dateStr);
 						for (const rec of dayRecs) {
-							entries.push({ record: rec, taskText: task.text, filePath: file.path });
+							entries.push({ record: rec, taskText: pathPrefix + task.text, filePath: file.path });
 						}
 					}
 					i += task.metaLineCount + 1;

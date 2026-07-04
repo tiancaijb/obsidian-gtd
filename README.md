@@ -1,71 +1,72 @@
-# GTD Workflow Plugin
+# GTD Workflow
 
-[English](#english) | [中文](#中文)
+> An Obsidian plugin that brings org-mode style GTD workflow to your vault — TODO/DONE states, priorities, scheduled/deadline dates, agenda view, quick capture, task timer, Pomodoro, timeline, and time statistics.
 
-A GTD (Get Things Done) workflow plugin using Markdown checkbox syntax with org-mode-style metadata.
+[中文](./README.zh-CN.md) · [日本語](./README.ja.md)
 
 ---
 
-## English
+## What Is This?
 
-### Features
+GTD Workflow adds a complete Get Things Done system to Obsidian using Markdown checkbox syntax with org-mode-style metadata. Tasks are written in plain Markdown files, fully editable and portable.
 
-- **GTD folder structure** — auto-creates `gtd/` folder with inbox, next actions, waiting, someday/maybe, projects
-- **Agenda view** — right sidebar showing tasks grouped by today, this week, this month, future
-- **Quick capture** — `Ctrl+Shift+C` to capture ideas to inbox from anywhere
-- **Task timer** — start/pause/stop timer, auto-writes CLOCK records
-- **Pomodoro timer** — focus/break cycles with automatic CLOCK logging
-- **Timeline view** — 24h timeline showing daily CLOCK records
-- **Time statistics** — per-task time aggregation with pie chart and CSV export
-- **Priorities** — `[#A] [#B] [#C]` inline priorities, `Shift+↑/↓` to cycle
-- **Indent** — `Alt+←/→` to promote/demote tasks (with subtasks)
-- **Bilingual** — UI and metadata keywords in Chinese and English
+Inspired by Emacs org-mode — designed for Obsidian.
 
-## 任务格式 Task Format
+## Features
+
+- **📁 GTD Folder Structure** — Auto-creates `gtd/` with inbox, next actions, waiting, someday/maybe, and projects.
+- **📋 Agenda View** — Right sidebar showing tasks grouped by today, this week, this month, and future.
+- **⚡ Quick Capture** — `Ctrl+Shift+C` to capture ideas to inbox from anywhere in Obsidian.
+- **⏱ Task Timer** — Start/pause/stop per-task timer. Auto-writes CLOCK records to the task.
+- **🍅 Pomodoro Timer** — Focus/break cycles with automatic CLOCK logging. Configurable duration and break length.
+- **📈 Timeline View** — 24h timeline showing daily CLOCK records. Browse any date.
+- **📊 Time Statistics** — Per-task time aggregation with pie chart visualization and CSV export.
+- **🔤 Priorities** — `[#A] [#B] [#C]` inline priorities. `Shift+↑/↓` to cycle.
+- **↔️ Indent** — `Alt+←/→` to promote/demote tasks with subtasks.
+- **🌐 Bilingual** — UI and metadata keywords in Chinese and English.
+
+## Task Format
 
 ```markdown
-- [ ] 任务描述  [#A]
-  计划: <2026-06-27>
-  截止: <2026-06-30>
+- [ ] Task description  [#A]
+  SCHEDULED: <2026-06-27>
+  DEADLINE: <2026-06-30>
   CLOCK: [2026-06-27 Sat 09:00]--[2026-06-27 Sat 10:30] => 1:30
 ```
 
-- 优先级：`[#A]`（高）`[#B]`（中）`[#C]`（低）
-- 日期：`计划:`（计划日期）`截止:`（截止日期）
-- 计时：`CLOCK: [开始]--[结束] => 时长`
+- Priority: `[#A]` (high) `[#B]` (medium) `[#C]` (low)
+- Dates: `SCHEDULED:` (scheduled date) `DEADLINE:` (deadline)
+- Time: `CLOCK: [start]--[end] => duration`
 
-## 快捷键 Commands
+## Commands
 
-| 命令 | 默认快捷键 |
-|------|-----------|
-| 快速捕获 Quick Capture | `Ctrl+Shift+C` |
-| 切换复选框 Toggle checkbox | `Ctrl+Enter` |
-| 循环优先级 Cycle priority | `Shift+↑` / `Shift+↓` |
-| 缩进调整 Promote/Demote | `Alt+←` / `Alt+→` |
-| 插入任务 Insert task | `Ctrl+Shift+Enter` |
-| 切换计时 Toggle timer | `Ctrl+Shift+T` |
-| 打开 Agenda | |
-| 打开时间轴 Timeline | |
-| 打开统计 Statistics | |
+| Command | Default Key |
+|---------|-------------|
+| Quick Capture | `Ctrl+Shift+C` |
+| Toggle checkbox | `Ctrl+Enter` |
+| Cycle priority | `Shift+↑` / `Shift+↓` |
+| Promote/Demote | `Alt+←` / `Alt+→` |
+| Insert task | `Ctrl+Shift+Enter` |
+| Toggle timer | `Ctrl+Shift+T` |
+| Open Agenda | — |
+| Open Timeline | — |
+| Open Statistics | — |
 
-## 视图 Views
+## Views
 
-- **Agenda** — 右侧边栏。任务按日期分组，内置快速捕获、计时器、番茄钟
-- **Timeline** — 右侧边栏。24h 时间轴，可查看任意一天的 CLOCK 记录
-- **Stats** — 右侧边栏。按任务汇总耗时统计，支持 CSV 导出
+- **Agenda** — Right sidebar. Tasks grouped by date, with inline quick capture, timer, and Pomodoro.
+- **Timeline** — Right sidebar. 24h timeline visualization. Browse any day's CLOCK records.
+- **Stats** — Right sidebar. Per-task time aggregation with pie chart. CSV export supported.
 
-## 安装 Installation
+## Installation
 
-### 从社区插件安装
+### From Obsidian Community Store
+Search **GTD Workflow** in Community Plugins (pending review).
 
-在社区插件中搜索 "GTD"（待提交审核后）
+### Manual
+Download `main.js`, `styles.css`, `manifest.json` from the [latest release](https://github.com/tiancaijb/obsidian-gtd/releases) and copy to `.obsidian/plugins/obsidian-gtd/`.
 
-### 手动安装
-
-从 [latest release](https://github.com/tiancaijb/obsidian-gtd/releases) 下载 `main.js`、`styles.css`、`manifest.json`，放入 `.obsidian/plugins/obsidian-gtd/`
-
-### 开发者模式
-
+### Developer Mode
 ```bash
 git clone git@github.com:tiancaijb/obsidian-gtd.git
 cd obsidian-gtd
@@ -73,6 +74,19 @@ npm install
 npm run dev
 ```
 
-## 许可证 License
+## Architecture
+
+The plugin's data model follows org-mode conventions:
+
+- **Tasks** are Markdown list items with checkbox `[ ]` / `[x]`
+- **Metadata** (`[#A]`, `SCHEDULED:`, `DEADLINE:`, `CLOCK:`) is inline in the list item body
+- **Views** parse the task files on the fly — no separate database
+- **Folder structure** (`gtd/`) mirrors the GTD methodology: inbox → process → organize → review
+
+## Why This Plugin?
+
+I use Emacs org-mode for my personal GTD system (see [my workflow](https://tiancaijb-site.vercel.app/zh/notes/my-workflow)). This plugin brings the same task model to Obsidian users — checkboxes, priorities, scheduled dates, CLOCK records — without requiring Emacs.
+
+## License
 
 MIT

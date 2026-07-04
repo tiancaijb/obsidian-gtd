@@ -9,7 +9,6 @@ import { TimelineView, TIMELINE_VIEW_TYPE } from './views/timeline-view';
 import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
-import { WelcomeModal } from './views/welcome-modal';
 import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, formatClockLine, setTickCallback } from './utils/timer';
 import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState } from './utils/pomodoro';
 
@@ -305,16 +304,24 @@ export default class OrgGtdPlugin extends Plugin {
 			}
 		});
 
+		// First-run welcome
+		window.setTimeout(() => {
+			if (this.settings.firstRun) {
+				this.settings.firstRun = false;
+				void this.saveSettings();
+				new Notice('👋 GTD Workflow 已加载 — 查看设置中的「快速开始」了解如何使用');
+			}
+		}, 2000);
+
 		new Notice('Gtd: loaded');
 
-		// First-run welcome
-		this.app.workspace.onLayoutReady(() => {
-			if (this.settings.firstRun) {
-				new WelcomeModal(this.app, this.settings.lang, () => {
-					this.settings.firstRun = false;
-					void this.saveSettings();
-				}).open();
-			}
+		// Test command: manually show welcome
+		this.addCommand({
+			id: 'gtd-welcome',
+			name: 'Show welcome guide',
+			callback: () => {
+				new Notice('📋 查看设置 → GTD Workflow → 快速开始');
+			},
 		});
 	}
 
