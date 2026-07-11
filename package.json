@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-gtd",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "Org-mode style GTD workflow for Obsidian",
 	"main": "main.js",
 	"type": "module",
