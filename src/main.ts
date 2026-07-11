@@ -41,7 +41,6 @@ export default class OrgGtdPlugin extends Plugin {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (!view) { new Notice('No active editor'); return; }
 				this.modifyCurrentLine(view.editor, (task) => {
-					const wasChecked = task.checked;
 					task.checked = !task.checked;
 
 					if (task.checked && task.repeat) {
@@ -555,7 +554,7 @@ export default class OrgGtdPlugin extends Plugin {
 			if (content.includes('走出房间门')) return;
 
 			const reminder = new Notice('☀️ 走出房间门了吗？', 10000);
-			reminder.noticeEl.onclick = async () => {
+			reminder.messageEl.onclick = async () => {
 			try {
 				const lines = content.split('\n');
 				for (let i = 0; i < lines.length; i++) {

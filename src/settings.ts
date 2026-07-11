@@ -171,8 +171,12 @@ export class GtdSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName(t('morningReminder', L())).setHeading();
 
 		const desc = containerEl.createEl('div', { cls: 'gtd-setting-desc' });
-		desc.innerHTML = `<p>${t('morningReminderDesc', L())} — Andrew Huberman</p>
-<p><a href="https://www.youtube.com/watch?v=nm1TxQj9IsQ" target="_blank">📺 Huberman Lab: Master Your Sleep</a></p>`;
+		desc.createEl('p', { text: `${t('morningReminderDesc', L())} — Andrew Huberman` });
+		const link = desc.createEl('p').createEl('a', {
+			text: '📺 Huberman Lab: Master Your Sleep',
+			href: 'https://www.youtube.com/watch?v=nm1TxQj9IsQ',
+		});
+		link.setAttr('target', '_blank');
 
 		new Setting(containerEl)
 			.setName(t('morningReminderEnable', L()))
