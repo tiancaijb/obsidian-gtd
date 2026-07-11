@@ -18,7 +18,7 @@ Inspired by Emacs org-mode — designed for Obsidian.
 
 - **📁 GTD Folder Structure** — Auto-creates `gtd/` with inbox, next actions, waiting, someday/maybe, and projects.
 - **📋 Agenda View** — Right sidebar showing tasks grouped by today, this week, this month, and future.
-- **⚡ Quick Capture** — `Ctrl+Shift+C` to capture ideas to inbox from anywhere in Obsidian.
+- **⚡ Quick Capture** — Capture ideas to inbox from anywhere in Obsidian.
 - **⏱ Task Timer** — Start/pause/stop per-task timer. Auto-writes CLOCK records to the task.
 - **🍅 Pomodoro Timer** — Focus/break cycles with automatic CLOCK logging. Configurable duration and break length.
 - **📈 Timeline View** — 24h timeline showing daily CLOCK records. Browse any date.
@@ -29,8 +29,8 @@ Inspired by Emacs org-mode — designed for Obsidian.
   > The habit is just "walk out the door" — no sunglasses, no 5 minutes, no pressure.
   > Lowest possible barrier to start your morning sunlight exposure.
   > [📺 Huberman Lab: Master Your Sleep](https://www.youtube.com/watch?v=nm1TxQj9IsQ)
-- **🔤 Priorities** — `[#A] [#B] [#C]` inline priorities. `Shift+↑/↓` to cycle.
-- **↔️ Indent** — `Alt+←/→` to promote/demote tasks with subtasks.
+- **🔤 Priorities** — `[#A] [#B] [#C]` inline priorities.
+- **↔️ Indent** — Promote/demote tasks with subtasks.
 - **🌐 Bilingual** — UI and metadata keywords in Chinese and English.
 
 ## Task Format
@@ -50,12 +50,12 @@ Inspired by Emacs org-mode — designed for Obsidian.
 
 | Command | Default Key |
 |---------|-------------|
-| Quick Capture | `Ctrl+Shift+C` |
-| Toggle checkbox | `Ctrl+Enter` |
-| Cycle priority | `Shift+↑` / `Shift+↓` |
-| Promote/Demote | `Alt+←` / `Alt+→` |
-| Insert task | `Ctrl+Shift+Enter` |
-| Toggle timer | `Ctrl+Shift+T` |
+| Quick Capture | — |
+| Toggle checkbox | — |
+| Cycle priority | — |
+| Promote/Demote | — |
+| Insert task | — |
+| Toggle timer | — |
 | Open Agenda | — |
 | Open Timeline | — |
 | Open Statistics | — |

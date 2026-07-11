@@ -16,7 +16,7 @@ GTD Workflow 用 Markdown 复选框语法 + org-mode 风格的元数据，在 Ob
 
 - **📁 GTD 文件夹结构** — 自动创建 `gtd/` 目录：inbox、next actions、waiting、someday/maybe、projects。
 - **📋 Agenda 视图** — 右侧边栏，任务按今日/本周/本月/未来分组。
-- **⚡ 快速捕获** — `Ctrl+Shift+C` 从 Obsidian 任何地方捕获想法到 inbox。
+- **⚡ 快速捕获** — 从 Obsidian 任何地方捕获想法到 inbox。
 - **⏱ 任务计时** — 每个任务独立计时器，自动写入 CLOCK 记录。
 - **🍅 番茄钟** — 专注/休息循环，自动记录 CLOCK。可配置时长。
 - **📈 时间轴** — 24h 时间轴，查看任意一天的 CLOCK 记录。
@@ -27,8 +27,8 @@ GTD Workflow 用 Markdown 复选框语法 + org-mode 风格的元数据，在 Ob
   > 习惯只要求「走出房间门」——不需要戴墨镜、不需要凑够5分钟、没有任何压力。
   > 以最低的门槛开始接触早晨日光。
   > [📺 Huberman Lab: Master Your Sleep](https://www.youtube.com/watch?v=nm1TxQj9IsQ)
-- **🔤 优先级** — `[#A] [#B] [#C]` 行内优先级，`Shift+↑/↓` 循环切换。
-- **↔️ 缩进调整** — `Alt+←/→` 升级/降级任务（含子任务）。
+- **🔤 优先级** — `[#A] [#B] [#C]` 行内优先级。
+- **↔️ 缩进调整** — 升级/降级任务（含子任务）。
 - **🌐 双语** — UI 和元数据关键字支持中文和英文。
 
 ## 任务格式
@@ -48,12 +48,12 @@ GTD Workflow 用 Markdown 复选框语法 + org-mode 风格的元数据，在 Ob
 
 | 命令 | 默认快捷键 |
 |------|-----------|
-| 快速捕获 Quick Capture | `Ctrl+Shift+C` |
-| 切换复选框 Toggle checkbox | `Ctrl+Enter` |
-| 循环优先级 Cycle priority | `Shift+↑` / `Shift+↓` |
-| 缩进调整 Promote/Demote | `Alt+←` / `Alt+→` |
-| 插入任务 Insert task | `Ctrl+Shift+Enter` |
-| 切换计时 Toggle timer | `Ctrl+Shift+T` |
+| 快速捕获 Quick Capture | — |
+| 切换复选框 Toggle checkbox | |
+| 循环优先级 Cycle priority | — |
+| 缩进调整 Promote/Demote | — |
+| 插入任务 Insert task | |
+| 切换计时 Toggle timer | |
 | 打开 Agenda | — |
 | 打开时间轴 Timeline | — |
 | 打开统计 Statistics | — |
