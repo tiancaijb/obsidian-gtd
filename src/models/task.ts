@@ -18,8 +18,10 @@ export interface ParsedTask {
 	priority: Priority | null;
 	/** Pure task text (without metadata markers) */
 	text: string;
-	/** SCHEDULED date (YYYY-MM-DD), optional repeat suffix e.g. +1d */
+	/** SCHEDULED date (YYYY-MM-DD) */
 	scheduled: string | null;
+	/** Repeat interval (e.g. +1d, +2d, +1w) */
+	repeat: string | null;
 	/** DEADLINE date (YYYY-MM-DD) */
 	deadline: string | null;
 	/** CLOSED date (YYYY-MM-DD) */

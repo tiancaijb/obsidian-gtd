@@ -3,8 +3,8 @@ import { Lang, metaKeywords } from './i18n';
 
 // All metadata keywords (both languages) — hardcoded to avoid module load order issues
 const KW_RAW = [
-	'SCHEDULED', 'DEADLINE', 'CLOSED', 'LOGGED', 'CLOCK', 'PRIORITY',
-	'\u8BA1\u5212', '\u622A\u6B62', '\u5B8C\u6210', '\u65E5\u5FD7', '\u8BA1\u65F6', '\u4F18\u5148\u7EA7',
+	'SCHEDULED', 'DEADLINE', 'CLOSED', 'REPEAT', 'LOGGED', 'CLOCK', 'PRIORITY',
+	'\u8BA1\u5212', '\u622A\u6B62', '\u5B8C\u6210', '\u91CD\u590D', '\u65E5\u5FD7', '\u8BA1\u65F6', '\u4F18\u5148\u7EA7',
 ];
 const KW = KW_RAW.join('|');
 
@@ -48,11 +48,13 @@ export function isTaskLine(line: string): boolean {
 function extractMetadata(text: string): {
 	priority: Priority | null;
 	scheduled: string | null;
+	repeat: string | null;
 	deadline: string | null;
 	closed: string | null;
 	cleanText: string;
 } {
 	let scheduled: string | null = null;
+	let repeat: string | null = null;
 	let deadline: string | null = null;
 	let closed: string | null = null;
 
@@ -65,6 +67,7 @@ function extractMetadata(text: string): {
 		if (/scheduled|计划/.test(key)) scheduled = cleanDate;
 		else if (/deadline|截止/.test(key)) deadline = cleanDate;
 		else if (/closed|完成/.test(key)) closed = cleanDate;
+		else if (/repeat|重复/.test(key)) repeat = cleanDate;
 	}
 
 	const priorityMatch = text.match(PRIORITY_RE);
@@ -78,7 +81,7 @@ function extractMetadata(text: string): {
 	cleanText = cleanText.replace(LABEL_CLEANUP_RE, '');
 	cleanText = cleanText.trim();
 
-	return { priority, scheduled, deadline, closed, cleanText };
+	return { priority, scheduled, repeat, deadline, closed, cleanText };
 }
 
 /**
@@ -94,12 +97,12 @@ export function parseTaskLine(line: string, lineNumber: number): ParsedTask | nu
 	if (!hasCheckbox) return null;
 
 	const afterMarker = trimmed.slice(listMatch[0].length);
-	const { priority, scheduled, deadline, closed, cleanText } = extractMetadata(afterMarker);
+	const { priority, scheduled, repeat, deadline, closed, cleanText } = extractMetadata(afterMarker);
 	const indent = listMatch[1]?.length ?? 0;
 
 	return {
 		hasCheckbox, checked, text: cleanText,
-		priority, scheduled, deadline, closed,
+		priority, scheduled, repeat, deadline, closed,
 		line: lineNumber, raw: line, metaLineCount: 0, indent,
 	};
 }
@@ -125,9 +128,10 @@ export function parseTaskLines(lines: string[], startLine: number): ParsedTask |
 	}
 
 	if (metaCount > 0) {
-		const { priority, scheduled, deadline, closed } = extractMetadata(metaText);
+		const { priority, scheduled, repeat, deadline, closed } = extractMetadata(metaText);
 		if (priority !== null) task.priority = priority;
 		if (scheduled !== null) task.scheduled = scheduled;
+		if (repeat !== null) task.repeat = repeat;
 		if (deadline !== null) task.deadline = deadline;
 		if (closed !== null) task.closed = closed;
 	}
@@ -150,6 +154,7 @@ export function serializeTask(task: ParsedTask, lang: Lang = 'zh'): string {
 	const kw = metaKeywords[lang];
 	const metaLines: string[] = [];
 	if (task.scheduled) metaLines.push(`  ${kw.scheduled}: <${task.scheduled}>`);
+	if (task.repeat) metaLines.push(`  ${kw.repeat}: <${task.repeat}>`);
 	if (task.deadline) metaLines.push(`  ${kw.deadline}: <${task.deadline}>`);
 	if (task.closed) metaLines.push(`  ${kw.closed}: <${task.closed}>`);
 

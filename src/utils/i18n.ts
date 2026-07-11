@@ -125,6 +125,12 @@ const strings: Record<Lang, Record<string, string>> = {
 		qCmdTimelineDesc: 'Ctrl+P → Open timeline',
 		qCmdStats: '统计',
 		qCmdStatsDesc: 'Ctrl+P → Open statistics',
+		morningReminder: '早起提醒',
+		morningReminderDesc: '出门晒太阳是调节昼夜节律最有效的单一工具',
+		morningReminderEnable: '启用早起提醒',
+		morningReminderStart: '开始时间',
+		morningReminderEnd: '结束时间',
+		timeFormat: '格式: HH:MM (24h)',
 	},
 	en: {
 		today: 'Today',
@@ -255,6 +261,12 @@ const strings: Record<Lang, Record<string, string>> = {
 		periodLastMonth: 'Last Month',
 		csvHeaders: 'Task,Sessions,Duration,Minutes,%',
 		copied: 'Copied to clipboard',
+		morningReminder: '☀️ Morning Reminder',
+		morningReminderDesc: 'Morning sunlight is the most powerful tool for regulating your circadian rhythm',
+		morningReminderEnable: 'Enable morning reminder',
+		morningReminderStart: 'Start time',
+		morningReminderEnd: 'End time',
+		timeFormat: 'Format: HH:MM (24h)',
 	},
 };
 
@@ -274,8 +286,8 @@ export function groupTitles(lang: Lang): string[] {
 
 /** Metadata keywords by language */
 export const metaKeywords: Record<Lang, Record<string, string>> = {
-	zh: { scheduled: '计划', deadline: '截止', closed: '完成', priority: '优先级', logged: '日志', clock: '计时' },
-	en: { scheduled: 'SCHEDULED', deadline: 'DEADLINE', closed: 'CLOSED', priority: 'PRIORITY', logged: 'LOGGED', clock: 'CLOCK' },
+	zh: { scheduled: '计划', deadline: '截止', closed: '完成', priority: '优先级', repeat: '重复', logged: '日志', clock: '计时' },
+	en: { scheduled: 'SCHEDULED', deadline: 'DEADLINE', closed: 'CLOSED', priority: 'PRIORITY', repeat: 'REPEAT', logged: 'LOGGED', clock: 'CLOCK' },
 };
 
 /** GTD file names — combined English-Chinese, language-independent */

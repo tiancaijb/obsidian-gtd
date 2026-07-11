@@ -11,6 +11,7 @@ import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
 import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, formatClockLine, setTickCallback } from './utils/timer';
 import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState } from './utils/pomodoro';
+import { computeNextDate, todayStr } from './utils/date-utils';
 
 const PRIORITIES: (Priority | null)[] = ['A', 'B', 'C', null];
 
@@ -28,6 +29,7 @@ export default class OrgGtdPlugin extends Plugin {
 		// Ensure GTD folder structure exists
 		this.app.workspace.onLayoutReady(() => {
 			void this.ensureGtdFolders();
+			void this.checkMorningReminder();
 		});
 
 		// --- Commands ---
@@ -39,8 +41,19 @@ export default class OrgGtdPlugin extends Plugin {
 				const view = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (!view) { new Notice('No active editor'); return; }
 				this.modifyCurrentLine(view.editor, (task) => {
+					const wasChecked = task.checked;
 					task.checked = !task.checked;
-					task.closed = task.checked ? new Date().toISOString().slice(0, 10) : null;
+
+					if (task.checked && task.repeat) {
+						// Repeat from today (like org-mode <.SCHEDULED: <.>)
+						const next = computeNextDate(todayStr(), task.repeat);
+						if (next) task.scheduled = next;
+						task.checked = false;
+						task.closed = null;
+					} else {
+						task.closed = task.checked ? new Date().toISOString().slice(0, 10) : null;
+					}
+
 					return task;
 				});
 			},
@@ -520,5 +533,50 @@ export default class OrgGtdPlugin extends Plugin {
 		for (const leaf of stLeaves) {
 			(leaf.view as unknown as StatsView).updateSettings(this.settings.lang);
 		}
+	}
+
+	/**
+	 * Check if it's morning and remind user about sunlight if not done yet.
+	 */
+	private async checkMorningReminder() {
+		if (!this.settings.morningReminderEnabled) return;
+
+		const now = new Date();
+		const minutes = now.getHours() * 60 + now.getMinutes();
+		if (minutes < this.settings.morningReminderStart || minutes > this.settings.morningReminderEnd) return; // 6:30-8:30
+
+		const filePath = this.settings.inboxPath;
+		try {
+			let content = await this.app.vault.adapter.read(filePath);
+			const today = now.toISOString().slice(0, 10);
+			// Check if already done today
+			if (content.includes('DONE 走出房间门') && content.includes(today)) return;
+			// If task exists in inbox but not done, also skip
+			if (content.includes('走出房间门')) return;
+
+			const reminder = new Notice('☀️ 走出房间门了吗？', 10000);
+			reminder.noticeEl.onclick = async () => {
+			try {
+				const lines = content.split('\n');
+				for (let i = 0; i < lines.length; i++) {
+					if (lines[i]!.includes('走出房间门') && lines[i]!.includes('[ ]')) {
+						lines[i] = lines[i]!.replace('[ ]', '[X]');
+						// Find SCHEDULED line and shift by REPEAT interval
+						for (let j = i + 1; j < lines.length && lines[j]!.match(/^\s+/); j++) {
+							const m = lines[j]!.match(/SCHEDULED:\s*<([^>]+)>/i);
+							const rm = lines[j]!.match(/REPEAT:\s*<([^>]+)>/i);
+							if (m && rm) {
+								const next = computeNextDate(todayStr(), rm[1]!);
+								if (next) lines[j] = lines[j]!.replace(/<[^>]+>/, `<${next}>`);
+							}
+						}
+						break;
+					}
+				}
+				await this.app.vault.adapter.write(filePath, lines.join('\n'));
+				new Notice('✅ 已标记');
+			} catch (_e) { void _e; }
+		};
+		} catch (_e) { void _e; }
 	}
 }

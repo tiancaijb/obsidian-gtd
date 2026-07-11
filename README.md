@@ -23,6 +23,12 @@ Inspired by Emacs org-mode — designed for Obsidian.
 - **🍅 Pomodoro Timer** — Focus/break cycles with automatic CLOCK logging. Configurable duration and break length.
 - **📈 Timeline View** — 24h timeline showing daily CLOCK records. Browse any date.
 - **📊 Time Statistics** — Per-task time aggregation with pie chart visualization and CSV export.
+- **🔄 Repeat Tasks** — Tasks with `REPEAT: +Nd` auto-shift to next date when marked done.
+- **☀️ Morning Reminder** — Reminds you to step outside your door in the morning (configurable, disabled by default).
+
+  > The habit is just "walk out the door" — no sunglasses, no 5 minutes, no pressure.
+  > Lowest possible barrier to start your morning sunlight exposure.
+  > [📺 Huberman Lab: Master Your Sleep](https://www.youtube.com/watch?v=nm1TxQj9IsQ)
 - **🔤 Priorities** — `[#A] [#B] [#C]` inline priorities. `Shift+↑/↓` to cycle.
 - **↔️ Indent** — `Alt+←/→` to promote/demote tasks with subtasks.
 - **🌐 Bilingual** — UI and metadata keywords in Chinese and English.

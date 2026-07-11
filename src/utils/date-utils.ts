@@ -29,6 +29,26 @@ export function todayStr(): string {
 }
 
 /**
+ * Compute next date from a repeat interval string.
+ * Supports +Nd (days), +Nw (weeks), +Nm (months).
+ * Returns YYYY-MM-DD string, or null if invalid.
+ */
+export function computeNextDate(scheduled: string, repeat: string): string | null {
+	const match = repeat.match(/^\+(\d+)([dwm])$/);
+	if (!match) return null;
+	const amount = parseInt(match[1]!, 10);
+	const unit = match[2];
+	const date = parseDate(scheduled);
+	if (!date) return null;
+	switch (unit) {
+		case 'd': date.setDate(date.getDate() + amount); break;
+		case 'w': date.setDate(date.getDate() + amount * 7); break;
+		case 'm': date.setMonth(date.getMonth() + amount); break;
+	}
+	return formatDate(date);
+}
+
+/**
  * Compare two date strings (YYYY-MM-DD). Returns:
  * - negative if a < b
  * - 0 if a === b

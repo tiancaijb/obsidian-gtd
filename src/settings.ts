@@ -15,6 +15,9 @@ export interface GtdPluginSettings {
 	pomodoroLongBreak: number;
 	pomodoroLongBreakAfter: number;
 	firstRun: boolean;
+	morningReminderEnabled: boolean;
+	morningReminderStart: number;
+	morningReminderEnd: number;
 }
 
 export const DEFAULT_SETTINGS: GtdPluginSettings = {
@@ -30,6 +33,9 @@ export const DEFAULT_SETTINGS: GtdPluginSettings = {
 	pomodoroLongBreak: 15,
 	pomodoroLongBreakAfter: 4,
 	firstRun: true,
+	morningReminderEnabled: false,
+	morningReminderStart: 390,
+	morningReminderEnd: 510,
 };
 
 export class GtdSettingTab extends PluginSettingTab {
@@ -161,6 +167,57 @@ export class GtdSettingTab extends PluginSettingTab {
 					}),
 			);
 
+		// ── Morning Reminder ──
+		new Setting(containerEl).setName(t('morningReminder', L())).setHeading();
+
+		const desc = containerEl.createEl('div', { cls: 'gtd-setting-desc' });
+		desc.innerHTML = `<p>${t('morningReminderDesc', L())} — Andrew Huberman</p>
+<p><a href="https://www.youtube.com/watch?v=nm1TxQj9IsQ" target="_blank">📺 Huberman Lab: Master Your Sleep</a></p>`;
+
+		new Setting(containerEl)
+			.setName(t('morningReminderEnable', L()))
+			.setDesc('')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.morningReminderEnabled)
+					.onChange(async (v) => {
+						this.plugin.settings.morningReminderEnabled = v;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t('morningReminderStart', L()))
+			.setDesc(t('timeFormat', L()))
+			.addText((text) =>
+				text
+					.setPlaceholder('06:30')
+					.setValue(this.formatTime(this.plugin.settings.morningReminderStart))
+					.onChange(async (v) => {
+						const m = this.parseTime(v);
+						if (m !== null) {
+							this.plugin.settings.morningReminderStart = m;
+							await this.plugin.saveSettings();
+						}
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName(t('morningReminderEnd', L()))
+			.setDesc(t('timeFormat', L()))
+			.addText((text) =>
+				text
+					.setPlaceholder('08:30')
+					.setValue(this.formatTime(this.plugin.settings.morningReminderEnd))
+					.onChange(async (v) => {
+						const m = this.parseTime(v);
+						if (m !== null) {
+							this.plugin.settings.morningReminderEnd = m;
+							await this.plugin.saveSettings();
+						}
+					}),
+			);
+
 		// ── Pomodoro ──
 		new Setting(containerEl).setName(t('pomodoroTitle', L())).setHeading();
 
@@ -244,5 +301,20 @@ export class GtdSettingTab extends PluginSettingTab {
 					}),
 			);
 
+	}
+
+	private formatTime(minutes: number): string {
+		const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+		const m = (minutes % 60).toString().padStart(2, '0');
+		return `${h}:${m}`;
+	}
+
+	private parseTime(str: string): number | null {
+		const match = str.match(/^(\d{1,2}):(\d{2})$/);
+		if (!match) return null;
+		const h = parseInt(match[1]!, 10);
+		const m = parseInt(match[2]!, 10);
+		if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+		return h * 60 + m;
 	}
 }
