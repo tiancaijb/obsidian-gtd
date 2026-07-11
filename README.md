@@ -4,6 +4,8 @@
 
 [中文](./README.zh-CN.md) · [日本語](./README.ja.md)
 
+[![爱发电赞助](afdian-sponsor.jpg)](https://afdian.com/a/xx7ax)
+
 ---
 
 ## What Is This?
@@ -86,6 +88,12 @@ The plugin's data model follows org-mode conventions:
 ## Why This Plugin?
 
 I use Emacs org-mode for my personal GTD system (see [my workflow](https://tiancaijb-site.vercel.app/zh/notes/my-workflow)). This plugin brings the same task model to Obsidian users — checkboxes, priorities, scheduled dates, CLOCK records — without requiring Emacs.
+
+## Sponsor
+
+If this plugin helps you, consider supporting my work ❤️
+
+[![爱发电赞助](afdian-sponsor.jpg)](https://afdian.com/a/xx7ax)
 
 ## License
 

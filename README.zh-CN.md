@@ -87,6 +87,12 @@ npm run dev
 
 我用 Emacs org-mode 做个人 GTD 系统（见 [我的工作流](https://tiancaijb-site.vercel.app/zh/notes/my-workflow)）。这个插件把同样的任务模型带给了 Obsidian 用户——复选框、优先级、计划日期、CLOCK 记录——不需要 Emacs。
 
+## 赞助
+
+如果这个插件对你有帮助，可以考虑赞助我 ❤️
+
+[![爱发电赞助](afdian-sponsor.jpg)](https://afdian.com/a/xx7ax)
+
 ## License
 
 MIT

@@ -87,6 +87,12 @@ npm run dev
 
 私は Emacs org-mode を個人の GTD システムとして使っています（[私のワークフロー](https://tiancaijb-site.vercel.app/zh/notes/my-workflow) 参照）。このプラグインは同じタスクモデルを Obsidian ユーザーに届けます——チェックボックス、優先度、予定日、CLOCK レコード——Emacs は不要です。
 
+## スポンサー
+
+このプラグインが役に立ったら、スポンサーしていただけると嬉しいです ❤️
+
+[![爱发电赞助](afdian-sponsor.jpg)](https://afdian.com/a/xx7ax)
+
 ## License
 
 MIT
