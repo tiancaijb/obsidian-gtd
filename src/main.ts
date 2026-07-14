@@ -9,8 +9,8 @@ import { TimelineView, TIMELINE_VIEW_TYPE } from './views/timeline-view';
 import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
-import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, setTickCallback } from './utils/timer';
-import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState } from './utils/pomodoro';
+import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, setTickCallback, setRegisterIntervalFn as setTimerRegisterIntervalFn } from './utils/timer';
+import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState, setRegisterIntervalFn as setPomodoroRegisterIntervalFn } from './utils/pomodoro';
 import { computeNextDate, todayStr } from './utils/date-utils';
 import { checkMorningReminder } from './utils/morning-reminder';
 import { appendClockLog } from './utils/file-ops';
@@ -28,6 +28,10 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.addSettingTab(new GtdSettingTab(this.app, this));
 		this.registerEditorExtension([gtdDecorationField]);
+
+		// Register intervals for lifecycle-safe cleanup
+		setTimerRegisterIntervalFn((id) => this.registerInterval(id));
+		setPomodoroRegisterIntervalFn((id) => this.registerInterval(id));
 
 		// Ensure GTD folder structure exists
 		this.app.workspace.onLayoutReady(() => {
@@ -297,14 +301,14 @@ export default class OrgGtdPlugin extends Plugin {
 			}
 		});
 
-		// First-run welcome
-		window.setTimeout(() => {
+		// First-run welcome (registered via registerInterval so it's cleaned up on unload)
+		this.registerInterval(window.setTimeout(() => {
 			if (this.settings.firstRun) {
 				this.settings.firstRun = false;
 				void this.saveSettings();
 				new Notice('👋 GTD Workflow 已加载 — 查看设置中的「快速开始」了解如何使用');
 			}
-		}, 2000);
+		}, 2000));
 
 		new Notice('Gtd: loaded');
 
@@ -445,7 +449,13 @@ export default class OrgGtdPlugin extends Plugin {
 		new Notice(t('timerStarted', this.settings.lang));
 	}
 
-	onunload() {}
+	onunload() {
+		// Clear callbacks to prevent stale references after plugin unload
+		setTickCallback(null);
+		setPomodoroCallbacks(null, null);
+		setTimerRegisterIntervalFn(null);
+		setPomodoroRegisterIntervalFn(null);
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData()) as GtdPluginSettings;

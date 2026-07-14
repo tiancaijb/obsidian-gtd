@@ -48,6 +48,7 @@ let config: PomodoroConfig = { ...DEFAULT_POMODORO_CONFIG };
 let tickCallback: (() => void) | null = null;
 let phaseEndCallback: ((phase: PomodoroPhase, state: PomodoroState) => void) | null = null;
 let intervalId: number | null = null;
+let registerIntervalFn: ((id: number) => void) | null = null;
 
 function notifyTick() { tickCallback?.(); }
 function notifyPhaseEnd(phase: PomodoroPhase) { phaseEndCallback?.(phase, state); }
@@ -66,6 +67,7 @@ function startInterval() {
 			notifyTick();
 		}
 	}, 1000);
+	registerIntervalFn?.(intervalId);
 }
 
 function stopInterval() {
@@ -83,6 +85,16 @@ export function getPomodoroConfig(): PomodoroConfig {
 export function setPomodoroCallbacks(tick: (() => void) | null, phaseEnd: ((phase: PomodoroPhase, st: PomodoroState) => void) | null) {
 	tickCallback = tick;
 	phaseEndCallback = phaseEnd;
+}
+
+/**
+ * Set a function to register the interval ID with the plugin lifecycle.
+ * When set, every new interval created by startInterval() will be passed
+ * to this function (typically `plugin.registerInterval`), so it is
+ * automatically cleaned up on plugin unload.
+ */
+export function setRegisterIntervalFn(fn: ((id: number) => void) | null) {
+	registerIntervalFn = fn;
 }
 
 export function getPomodoroState(): PomodoroState {

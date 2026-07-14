@@ -13,12 +13,14 @@ export interface TimerState {
 let currentTimer: TimerState | null = null;
 let tickCallback: (() => void) | null = null;
 let intervalId: number | null = null;
+let registerIntervalFn: ((id: number) => void) | null = null;
 
 function notifyTick() { tickCallback?.(); }
 
 function startInterval() {
 	if (intervalId !== null) return;
 	intervalId = window.setInterval(notifyTick, 5000); // every 5s is enough
+	registerIntervalFn?.(intervalId);
 }
 
 function stopInterval() {
@@ -27,6 +29,16 @@ function stopInterval() {
 
 export function getCurrentTimer(): TimerState | null { return currentTimer; }
 export function setTickCallback(cb: (() => void) | null) { tickCallback = cb; }
+
+/**
+ * Set a function to register the interval ID with the plugin lifecycle.
+ * When set, every new interval created by startInterval() will be passed
+ * to this function (typically `plugin.registerInterval`), so it is
+ * automatically cleaned up on plugin unload.
+ */
+export function setRegisterIntervalFn(fn: ((id: number) => void) | null) {
+	registerIntervalFn = fn;
+}
 
 export function startTimer(filePath: string, line: number): TimerState {
 	currentTimer = { filePath, line, startTime: Date.now(), elapsedMs: 0, running: true };
