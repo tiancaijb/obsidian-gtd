@@ -25,14 +25,19 @@ export async function checkMorningReminder(plugin: OrgGtdPlugin): Promise<void> 
 			try {
 				const lines = content.split('\n');
 				for (let i = 0; i < lines.length; i++) {
-					if (lines[i]!.includes('走出房间门') && lines[i]!.includes('[ ]')) {
-						lines[i] = lines[i]!.replace('[ ]', '[X]');
-						for (let j = i + 1; j < lines.length && lines[j]!.match(/^\s+/); j++) {
-							const m = lines[j]!.match(/SCHEDULED:\s*<([^>]+)>/i);
-							const rm = lines[j]!.match(/REPEAT:\s*<([^>]+)>/i);
+					const line = lines[i];
+					if (line === undefined) continue;
+					if (line.includes('走出房间门') && line.includes('[ ]')) {
+						lines[i] = line.replace('[ ]', '[X]');
+						for (let j = i + 1; j < lines.length; j++) {
+							const metaLine = lines[j];
+							if (metaLine === undefined) break;
+							if (!metaLine.match(/^\s+/)) break;
+							const m = metaLine.match(/SCHEDULED:\s*<([^>]+)>/i);
+							const rm = metaLine.match(/REPEAT:\s*<([^>]+)>/i);
 							if (m && rm) {
-								const next = computeNextDate(todayStr(), rm[1]!);
-								if (next) lines[j] = lines[j]!.replace(/<[^>]+>/, `<${next}>`);
+								const next = computeNextDate(todayStr(), rm[1] ?? '');
+								if (next) lines[j] = metaLine.replace(/<[^>]+>/, `<${next}>`);
 							}
 						}
 						break;

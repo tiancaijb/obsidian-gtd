@@ -3,8 +3,9 @@ import { AGENDA_VIEW_TYPE } from '../views/agenda-view';
 
 export function toggleAgendaView(workspace: Workspace) {
 	const leaves = workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-	if (leaves.length > 0) {
-		leaves[0]!.detach();
+	const leaf = leaves[0];
+	if (leaf) {
+		leaf.detach();
 	} else {
 		void activateAgendaView(workspace);
 	}
@@ -19,8 +20,9 @@ export async function activateAgendaView(workspace: Workspace) {
 
 export function openOrRevealView(workspace: Workspace, viewType: string) {
 	const existing = workspace.getLeavesOfType(viewType);
-	if (existing.length > 0) {
-		void workspace.revealLeaf(existing[0]!);
+	const existingLeaf = existing[0];
+	if (existingLeaf) {
+		void workspace.revealLeaf(existingLeaf);
 	} else {
 		const leaf = workspace.getRightLeaf(false);
 		if (leaf) {

@@ -320,8 +320,8 @@ export class GtdSettingTab extends PluginSettingTab {
 	private parseTime(str: string): number | null {
 		const match = str.match(/^(\d{1,2}):(\d{2})$/);
 		if (!match) return null;
-		const h = parseInt(match[1]!, 10);
-		const m = parseInt(match[2]!, 10);
+		const h = parseInt(match[1] ?? '0', 10);
+		const m = parseInt(match[2] ?? '0', 10);
 		if (h < 0 || h > 23 || m < 0 || m > 59) return null;
 		return h * 60 + m;
 	}

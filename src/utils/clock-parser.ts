@@ -19,14 +19,14 @@ export function parseClockLine(line: string): ClockRecord | null {
 	const m = CLOCK_RE.exec(line);
 	if (!m) return null;
 
-	const start = parseClockDate(m[2]!);
-	const end = parseClockDate(m[3]!);
+	const start = parseClockDate(m[2] ?? '');
+	const end = parseClockDate(m[3] ?? '');
 	if (!start || !end) return null;
 
-	const h = parseInt(m[4]!);
-	const min = parseInt(m[5]!);
+	const h = parseInt(m[4] ?? '0');
+	const min = parseInt(m[5] ?? '0');
 
-	return { start, end, durationMin: h * 60 + min, keyword: m[1]! };
+	return { start, end, durationMin: h * 60 + min, keyword: m[1] ?? 'CLOCK' };
 }
 
 /**

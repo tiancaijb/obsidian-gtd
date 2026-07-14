@@ -36,7 +36,7 @@ export function todayStr(): string {
 export function computeNextDate(scheduled: string, repeat: string): string | null {
 	const match = repeat.match(/^\+(\d+)([dwm])$/);
 	if (!match) return null;
-	const amount = parseInt(match[1]!, 10);
+	const amount = parseInt(match[1] ?? '0', 10);
 	const unit = match[2];
 	const date = parseDate(scheduled);
 	if (!date) return null;

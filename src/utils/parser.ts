@@ -61,9 +61,9 @@ function extractMetadata(text: string): {
 	DATE_MARKER_RE.lastIndex = 0;
 	let m: RegExpExecArray | null;
 	while ((m = DATE_MARKER_RE.exec(text)) !== null) {
-		const key = m[1]!.toLowerCase();
-		const dateStr = m[2]!;
-		const cleanDate = dateStr.split(/\s+/)[0]!;
+		const key = (m[1] ?? '').toLowerCase();
+		const dateStr = m[2] ?? '';
+		const cleanDate = (dateStr.split(/\s+/)[0] ?? dateStr) || ''; // Use first token or fallback
 		if (/scheduled|计划/.test(key)) scheduled = cleanDate;
 		else if (/deadline|截止/.test(key)) deadline = cleanDate;
 		else if (/closed|完成/.test(key)) closed = cleanDate;
@@ -120,9 +120,12 @@ export function parseTaskLines(lines: string[], startLine: number): ParsedTask |
 	let metaCount = 0;
 	let metaText = '';
 	let i = startLine + 1;
-	while (i < lines.length && isMetaLine(lines[i]!)) {
-		const ml = lines[i]!.trimEnd();
-		metaText += ' ' + ml;
+	while (i < lines.length) {
+		const ml = lines[i];
+		if (ml === undefined) break;
+		if (!isMetaLine(ml)) break;
+		const trimmed = ml.trimEnd();
+		metaText += ' ' + trimmed;
 		metaCount++;
 		i++;
 	}

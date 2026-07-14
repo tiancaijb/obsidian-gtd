@@ -19,7 +19,7 @@ import { toggleAgendaView, activateAgendaView, openOrRevealView } from './utils/
 const PRIORITIES: (Priority | null)[] = ['A', 'B', 'C', null];
 
 export default class OrgGtdPlugin extends Plugin {
-	settings!: GtdPluginSettings;
+	settings: GtdPluginSettings = { ...DEFAULT_SETTINGS };
 
 	async onload() {
 		await this.loadSettings();
@@ -70,7 +70,7 @@ export default class OrgGtdPlugin extends Plugin {
 			editorCallback: (editor: Editor) => {
 				this.modifyCurrentLine(editor, (task) => {
 					const idx = PRIORITIES.indexOf(task.priority);
-					task.priority = PRIORITIES[(idx + 1) % PRIORITIES.length]!;
+					task.priority = PRIORITIES[(idx + 1) % PRIORITIES.length] ?? null;
 					return task;
 				});
 			},
@@ -81,7 +81,7 @@ export default class OrgGtdPlugin extends Plugin {
 			editorCallback: (editor: Editor) => {
 				this.modifyCurrentLine(editor, (task) => {
 					const idx = PRIORITIES.indexOf(task.priority);
-					task.priority = PRIORITIES[(idx - 1 + PRIORITIES.length) % PRIORITIES.length]!;
+					task.priority = PRIORITIES[(idx - 1 + PRIORITIES.length) % PRIORITIES.length] ?? null;
 					return task;
 				});
 			},
@@ -164,8 +164,9 @@ export default class OrgGtdPlugin extends Plugin {
 		// Timer state-change callback: immediate UI update on start/pause/resume/stop
 		setTickCallback(() => {
 			const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-			if (leaves.length > 0 && leaves[0]!.view instanceof AgendaView) {
-				leaves[0]!.view.refreshTimerOnly();
+			const leaf = leaves[0];
+			if (leaf?.view instanceof AgendaView) {
+				leaf.view.refreshTimerOnly();
 			}
 		});
 
@@ -173,8 +174,9 @@ export default class OrgGtdPlugin extends Plugin {
 		this.registerInterval(window.setInterval(() => {
 			if (getCurrentTimer()?.running) {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-				if (leaves.length > 0 && leaves[0]!.view instanceof AgendaView) {
-					leaves[0]!.view.refreshTimerOnly();
+				const leaf = leaves[0];
+				if (leaf?.view instanceof AgendaView) {
+					leaf.view.refreshTimerOnly();
 				}
 			}
 		}, 5000));
@@ -201,10 +203,9 @@ export default class OrgGtdPlugin extends Plugin {
 		setPomodoroCallbacks(
 			() => {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-				if (leaves.length > 0) {
-					if (leaves[0]!.view instanceof AgendaView) {
-						leaves[0]!.view.refreshPomodoro();
-					}
+				const leaf = leaves[0];
+				if (leaf?.view instanceof AgendaView) {
+					leaf.view.refreshPomodoro();
 				}
 			},
 			(phase: PomodoroPhase, ps: PomodoroState) => {
@@ -283,8 +284,9 @@ export default class OrgGtdPlugin extends Plugin {
 			name: 'Refresh sidebar',
 			callback: () => {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-				if (leaves.length > 0 && leaves[0]!.view instanceof AgendaView) {
-					void leaves[0]!.view.refresh();
+				const leaf = leaves[0];
+				if (leaf?.view instanceof AgendaView) {
+					void leaf.view.refresh();
 				}
 			},
 		});
@@ -373,7 +375,8 @@ export default class OrgGtdPlugin extends Plugin {
 		let blockEnd = cursor.line;
 
 		for (let i = cursor.line + 1; i < lines.length; i++) {
-			const l = lines[i]!;
+			const l = lines[i];
+			if (l === undefined) break;
 			if (isTaskLine(l)) {
 				const indent = l.match(/^(\s*)/)?.[1]?.length ?? 0;
 				if (indent <= baseIndent) break; // peer or parent — stop
@@ -386,13 +389,14 @@ export default class OrgGtdPlugin extends Plugin {
 		// Adjust indent for all lines in the block
 		const indentDiff = newIndent - currentIndent;
 		for (let i = cursor.line; i <= blockEnd; i++) {
-			const l = lines[i]!;
+			const l = lines[i];
+			if (l === undefined) continue;
 			const leading = l.match(/^(\s*)/)?.[1] ?? '';
 			lines[i] = l.slice(leading.length);
 			const newLeading = leading.length + indentDiff >= 0
 				? ' '.repeat(leading.length + indentDiff)
 				: '';
-			lines[i] = newLeading + lines[i]!;
+			lines[i] = newLeading + (lines[i] ?? '');
 		}
 
 		editor.setValue(lines.join('\n'));
