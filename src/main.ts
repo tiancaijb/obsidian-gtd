@@ -395,7 +395,9 @@ export default class OrgGtdPlugin extends Plugin {
 			if (!(await this.app.vault.adapter.exists(base))) {
 				await this.app.vault.createFolder(base);
 			}
-		} catch (_e) { void _e; }
+		} catch (e) {
+			console.warn('Failed to create GTD base folder:', e);
+		}
 
 		// Create GTD files with combined English-Chinese names
 		for (const fname of Object.values(gtdFilenames)) {
@@ -404,7 +406,9 @@ export default class OrgGtdPlugin extends Plugin {
 				if (!(await this.app.vault.adapter.exists(filePath))) {
 					await this.app.vault.create(filePath, '\n');
 				}
-			} catch (_e) { void _e; }
+			} catch (e) {
+				console.warn(`Failed to create GTD file "${filePath}":`, e);
+			}
 		}
 
 		this.settings.inboxPath = `${base}/${gtdFilenames.inbox}.md`;

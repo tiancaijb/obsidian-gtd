@@ -1,3 +1,4 @@
+import { Notice } from 'obsidian';
 import OrgGtdPlugin from '../main';
 import { parseTaskLines } from './parser';
 import { formatClockLine } from './timer';
@@ -27,5 +28,8 @@ export async function appendClockLog(
 		await plugin.app.vault.adapter.write(filePath, lines.join('\n'));
 
 		// Notify views to refresh — handled by caller via settings/view access
-	} catch (_e) { void _e; }
+	} catch (e) {
+		console.warn('Failed to append clock log:', e);
+		new Notice('Failed to save clock record');
+	}
 }

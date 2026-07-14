@@ -96,6 +96,10 @@ def run_pi(ticket_num: str, ticket_name: str) -> bool:
         f"Implement the changes, then run verification commands to confirm."
     )
 
+    pi_env = os.environ.copy()
+    # Unset PI_CODING_AGENT so the child pi starts fresh
+    pi_env.pop("PI_CODING_AGENT", None)
+
     cmd = [
         "pi", "-p", "--no-session",
         f"@{SPEC_FILE}",
@@ -103,21 +107,23 @@ def run_pi(ticket_num: str, ticket_name: str) -> bool:
         prompt,
     ]
 
-    print(f"  🤖  Running pi for ticket {ticket_num}...")
+    print(f"  🤖  Running pi for ticket {ticket_num} (up to 600s)...")
     result = subprocess.run(
         cmd,
         cwd=PROJECT_DIR,
-        capture_output=True, text=True, timeout=300,
+        capture_output=True, text=True, timeout=600,
+        env=pi_env,
     )
 
     if result.returncode != 0:
         print(f"  ❌  pi exited with code {result.returncode}")
-        print(result.stderr[-1000:] if result.stderr else "")
+        # Print more context
+        out = (result.stdout + result.stderr)[-2000:].strip()
+        print(out)
         return False
 
-    # Check if pi produced meaningful output or just errors
     output = (result.stdout + result.stderr)[-500:].strip()
-    print(f"  ℹ️  pi output (last 500 chars):\n{output}")
+    print(f"  ℹ️  pi done (last 500 chars):\n{output}")
     return True
 
 

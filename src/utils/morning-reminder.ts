@@ -40,7 +40,12 @@ export async function checkMorningReminder(plugin: OrgGtdPlugin): Promise<void> 
 				}
 				await plugin.app.vault.adapter.write(filePath, lines.join('\n'));
 				new Notice('✅ 已标记');
-			} catch (_e) { void _e; }
+			} catch (e) {
+				console.warn('Failed to mark morning reminder done:', e);
+				new Notice('Failed to save changes');
+			}
 		};
-	} catch (_e) { void _e; }
+	} catch (e) {
+		console.warn('Failed to read inbox for morning reminder:', e);
+	}
 }
