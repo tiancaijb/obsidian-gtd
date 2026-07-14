@@ -164,8 +164,8 @@ export default class OrgGtdPlugin extends Plugin {
 		// Timer state-change callback: immediate UI update on start/pause/resume/stop
 		setTickCallback(() => {
 			const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-			if (leaves.length > 0) {
-				(leaves[0]!.view as unknown as AgendaView).refreshTimerOnly();
+			if (leaves.length > 0 && leaves[0]!.view instanceof AgendaView) {
+				leaves[0]!.view.refreshTimerOnly();
 			}
 		});
 
@@ -173,8 +173,8 @@ export default class OrgGtdPlugin extends Plugin {
 		this.registerInterval(window.setInterval(() => {
 			if (getCurrentTimer()?.running) {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-				if (leaves.length > 0) {
-					(leaves[0]!.view as unknown as AgendaView).refreshTimerOnly();
+				if (leaves.length > 0 && leaves[0]!.view instanceof AgendaView) {
+					leaves[0]!.view.refreshTimerOnly();
 				}
 			}
 		}, 5000));
@@ -202,7 +202,9 @@ export default class OrgGtdPlugin extends Plugin {
 			() => {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 				if (leaves.length > 0) {
-					(leaves[0]!.view as unknown as AgendaView).refreshPomodoro();
+					if (leaves[0]!.view instanceof AgendaView) {
+						leaves[0]!.view.refreshPomodoro();
+					}
 				}
 			},
 			(phase: PomodoroPhase, ps: PomodoroState) => {
@@ -281,8 +283,8 @@ export default class OrgGtdPlugin extends Plugin {
 			name: 'Refresh sidebar',
 			callback: () => {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-				if (leaves.length > 0) {
-					void (leaves[0]!.view as unknown as AgendaView).refresh();
+				if (leaves.length > 0 && leaves[0]!.view instanceof AgendaView) {
+					void leaves[0]!.view.refresh();
 				}
 			},
 		});
@@ -490,15 +492,21 @@ export default class OrgGtdPlugin extends Plugin {
 		this.applyTheme();
 		const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 		for (const leaf of leaves) {
-			(leaf.view as unknown as AgendaView).updateSettings(this.settings);
+			if (leaf.view instanceof AgendaView) {
+				leaf.view.updateSettings(this.settings);
+			}
 		}
 		const tlLeaves = this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE);
 		for (const leaf of tlLeaves) {
-			(leaf.view as unknown as TimelineView).updateSettings(this.settings.lang);
+			if (leaf.view instanceof TimelineView) {
+				leaf.view.updateSettings(this.settings.lang);
+			}
 		}
 		const stLeaves = this.app.workspace.getLeavesOfType(STATS_VIEW_TYPE);
 		for (const leaf of stLeaves) {
-			(leaf.view as unknown as StatsView).updateSettings(this.settings.lang);
+			if (leaf.view instanceof StatsView) {
+				leaf.view.updateSettings(this.settings.lang);
+			}
 		}
 	}
 }
