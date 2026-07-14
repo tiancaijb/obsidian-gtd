@@ -47,6 +47,10 @@ export class GtdSettingTab extends PluginSettingTab {
 	}
 
 	display(): void {
+		this.renderSettings();
+	}
+
+	private renderSettings(): void {
 		const { containerEl } = this;
 		containerEl.empty();
 
@@ -87,7 +91,7 @@ export class GtdSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.gtdFolder = value;
 						await this.plugin.saveSettings();
-						this.display();
+						this.renderSettings();
 					}),
 			);
 
@@ -107,7 +111,7 @@ export class GtdSettingTab extends PluginSettingTab {
 					.onChange((v) => {
 						this.plugin.settings.lang = v as 'zh' | 'en';
 						this.plugin.saveData(this.plugin.settings);
-						this.display();
+						this.renderSettings();
 					}),
 			);
 
@@ -301,7 +305,7 @@ export class GtdSettingTab extends PluginSettingTab {
 						this.plugin.settings.pomodoroLongBreak = DEFAULT_SETTINGS.pomodoroLongBreak;
 						this.plugin.settings.pomodoroLongBreakAfter = DEFAULT_SETTINGS.pomodoroLongBreakAfter;
 						await this.plugin.saveSettings();
-						this.display();
+						this.renderSettings();
 					}),
 			);
 

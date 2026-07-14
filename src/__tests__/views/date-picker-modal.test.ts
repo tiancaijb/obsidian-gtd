@@ -14,7 +14,7 @@ vi.mock('obsidian', () => import('../helpers/obsidian-mock').then(m => m.obsidia
 // DatePickerModal uses window.setTimeout
 vi.stubGlobal('window', { setTimeout: globalThis.setTimeout.bind(globalThis) });
 
-import { DatePickerModal, DatePickerResult } from '../../views/date-picker-modal';
+import { DatePickerModal } from '../../views/date-picker-modal';
 import { MockApp, MockHTMLElement } from '../helpers/obsidian-mock';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────

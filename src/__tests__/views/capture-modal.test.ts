@@ -7,7 +7,7 @@
  * - Keyboard shortcuts are registered
  * - Vault is used correctly for existing and new files
  */
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect, afterEach } from 'vitest';
 
 vi.mock('obsidian', () => import('../helpers/obsidian-mock').then(m => m.obsidianMockModule()));
 
