@@ -44,10 +44,10 @@ export class StatsView extends ItemView {
 	getIcon(): string { return 'bar-chart'; }
 
 	async onOpen() {
-		void this.loadData();
+		await this.loadData();
 	}
 
-	async refresh() {
+	refresh() {
 		void this.loadData();
 	}
 
@@ -145,7 +145,7 @@ export class StatsView extends ItemView {
 		for (const p of periods) {
 			const btn = periodRow.createEl('button', {
 				cls: 'gtd-stats-period-btn' + (this.period === p.key ? ' active' : ''),
-				text: String(t(p.labelKey, this.lang)),
+				text: t(p.labelKey, this.lang),
 			});
 			btn.addEventListener('click', () => {
 				this.period = p.key;

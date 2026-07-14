@@ -87,7 +87,7 @@ export class GtdSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.gtdFolder = value;
 						await this.plugin.saveSettings();
-						void this.display();
+						this.display();
 					}),
 			);
 
@@ -107,7 +107,7 @@ export class GtdSettingTab extends PluginSettingTab {
 					.onChange((v) => {
 						this.plugin.settings.lang = v as 'zh' | 'en';
 						this.plugin.saveData(this.plugin.settings);
-						void this.display();
+						this.display();
 					}),
 			);
 
@@ -301,7 +301,7 @@ export class GtdSettingTab extends PluginSettingTab {
 						this.plugin.settings.pomodoroLongBreak = DEFAULT_SETTINGS.pomodoroLongBreak;
 						this.plugin.settings.pomodoroLongBreakAfter = DEFAULT_SETTINGS.pomodoroLongBreakAfter;
 						await this.plugin.saveSettings();
-						void this.display();
+						this.display();
 					}),
 			);
 

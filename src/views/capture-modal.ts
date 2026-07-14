@@ -30,7 +30,7 @@ export class CaptureModal extends Modal {
 			cls: 'gtd-capture-input',
 			attr: { type: 'text', placeholder: `${t('quickCapturePlaceholder', this.lang)} (Enter = submit)` },
 		});
-		window.setTimeout(() => input.focus(), 50);
+		window.setTimeout(() => { input.focus(); }, 50);
 
 		// Priority hint + buttons
 		const prioRow = contentEl.createDiv({ cls: 'gtd-capture-prio-row' });
@@ -58,7 +58,7 @@ export class CaptureModal extends Modal {
 			if (p.value) btn.style.cssText = `--prio-color: ${p.color};`;
 			btn.addEventListener('click', () => {
 				this.selectedPrio = p.value;
-				prioButtons.forEach((b) => b.removeClass('active'));
+				prioButtons.forEach((b) => { b.removeClass('active'); });
 				btn.addClass('active');
 				input.focus();
 			});
@@ -91,7 +91,7 @@ export class CaptureModal extends Modal {
 		// Submit
 		const submitBtn = contentEl.createEl('button', {
 			cls: 'gtd-capture-submit',
-			text: `${t('capture', this.lang)}`,
+			text: t('capture', this.lang),
 		});
 
 		const doCapture = async () => {

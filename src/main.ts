@@ -128,13 +128,13 @@ export default class OrgGtdPlugin extends Plugin {
 		this.addCommand({
 			id: 'gtd-promote',
 			name: 'Promote task (reduce indent)',
-			editorCallback: (editor: Editor) => this.adjustIndent(editor, -2),
+			editorCallback: (editor: Editor) => { this.adjustIndent(editor, -2); },
 		});
 
 		this.addCommand({
 			id: 'gtd-demote',
 			name: 'Demote task (increase indent)',
-			editorCallback: (editor: Editor) => this.adjustIndent(editor, 2),
+			editorCallback: (editor: Editor) => { this.adjustIndent(editor, 2); },
 		});
 
 		// --- Insert task checkbox ---
@@ -252,18 +252,18 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.registerView(AGENDA_VIEW_TYPE, (leaf) => new AgendaView(leaf, this.settings, timerAPI));
 
-		this.addRibbonIcon('list-checks', 'GTD', () => this.toggleAgendaView());
+		this.addRibbonIcon('list-checks', 'GTD', () => { this.toggleAgendaView(); });
 
 		this.addCommand({
 			id: 'gtd-open-agenda',
 			name: 'Open sidebar',
-			callback: () => this.toggleAgendaView(),
+			callback: () => { this.toggleAgendaView(); },
 		});
 
 		this.addCommand({
 			id: 'gtd-refresh-agenda',
 			name: 'Refresh sidebar',
-			callback: async () => {
+			callback: () => {
 				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 				if (leaves.length > 0) {
 					void (leaves[0]!.view as unknown as AgendaView).refresh();
@@ -482,7 +482,7 @@ export default class OrgGtdPlugin extends Plugin {
 	toggleAgendaView() {
 		const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 		if (leaves.length > 0) {
-			void leaves[0]!.detach();
+			leaves[0]!.detach();
 		} else {
 			void this.activateAgendaView();
 		}
@@ -546,7 +546,7 @@ export default class OrgGtdPlugin extends Plugin {
 
 		const filePath = this.settings.inboxPath;
 		try {
-			let content = await this.app.vault.adapter.read(filePath);
+			const content = await this.app.vault.adapter.read(filePath);
 			const today = now.toISOString().slice(0, 10);
 			// Check if already done today
 			if (content.includes('DONE 走出房间门') && content.includes(today)) return;

@@ -98,8 +98,8 @@ def run_pi(ticket_num: str, ticket_name: str) -> bool:
 
     cmd = [
         "pi", "-p", "--no-session",
-        str(SPEC_FILE),
-        str(ticket_file),
+        f"@{SPEC_FILE}",
+        f"@{ticket_file}",
         prompt,
     ]
 
@@ -156,11 +156,14 @@ def main():
         print("❌ Not a git repository. Run 'git init && git add -A && git commit -m init' first.")
         sys.exit(1)
 
-    # Initial verify before starting
-    print("🔍 Pre-flight verification...")
-    if not run_verify():
-        print("❌ Pre-flight verification failed. Fix before running auto-develop.")
+    # Initial verify before starting (build only — lint is fixed in ticket 0001)
+    print("🔍 Pre-flight verification (build only)...")
+    result = subprocess.run(["npm", "run", "build"], cwd=PROJECT_DIR, capture_output=True, text=True, timeout=120)
+    if result.returncode != 0:
+        print("❌ Build failed:", result.stderr[-500:])
+        print("Fix before running auto-develop.")
         sys.exit(1)
+    print("  ✅ Build passes")
 
     completed = get_completed_tickets()
     all_tickets = list_all_tickets()

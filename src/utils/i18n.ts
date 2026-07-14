@@ -271,7 +271,7 @@ const strings: Record<Lang, Record<string, string>> = {
 };
 
 export function t(key: string, lang: Lang): string {
-	return strings[lang]?.[key] ?? strings['en']?.[key] ?? key;
+	return strings[lang][key] ?? strings['en'][key] ?? key;
 }
 
 export function groupTitles(lang: Lang): string[] {

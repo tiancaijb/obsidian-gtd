@@ -41,10 +41,10 @@ export class TimelineView extends ItemView {
 	getIcon(): string { return 'clock'; }
 
 	async onOpen() {
-		void this.loadData();
+		await this.loadData();
 	}
 
-	async refresh() {
+	refresh() {
 		void this.loadData();
 	}
 
@@ -96,7 +96,7 @@ export class TimelineView extends ItemView {
 				if (headingMatch) {
 					const level = headingMatch[1]!.length;
 					// Clean heading: remove links [[...]] → keep text
-					let headingText = headingMatch[2]!.replace(/\[\[([^\]|]+)\|?\]\]/g, '$1').replace(/\[\[([^\]]+)\]\]/g, '$1');
+					const headingText = headingMatch[2]!.replace(/\[\[([^\]|]+)\|?\]\]/g, '$1').replace(/\[\[([^\]]+)\]\]/g, '$1');
 					// Pop stack to matching level
 					while (headingStack.length >= level) { headingStack.pop(); }
 					headingStack.push(headingText);

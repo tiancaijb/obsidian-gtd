@@ -177,13 +177,13 @@ export class AgendaView extends ItemView {
 			cls: 'gtd-nav-btn',
 			text: t('timelineTitle', L()),
 		});
-		tlBtn.addEventListener('click', () => openView(TIMELINE_VIEW_TYPE));
+		tlBtn.addEventListener('click', () => { openView(TIMELINE_VIEW_TYPE); });
 
 		const stBtn = nav.createEl('button', {
 			cls: 'gtd-nav-btn',
 			text: t('statsTitle', L()),
 		});
-		stBtn.addEventListener('click', () => openView(STATS_VIEW_TYPE));
+		stBtn.addEventListener('click', () => { openView(STATS_VIEW_TYPE); });
 	}
 
 	// ── Capture bar at the top ──

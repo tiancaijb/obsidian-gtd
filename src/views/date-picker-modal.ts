@@ -74,7 +74,7 @@ export class DatePickerModal extends Modal {
 
 		const calBtn = calWrap.createEl('button', { cls: 'gtd-dp-cal-btn', text: '📅' });
 		calBtn.addEventListener('click', () => {
-			dateInput.showPicker?.();
+			dateInput.showPicker();
 		});
 
 		dateInput.addEventListener('change', () => {
@@ -102,10 +102,10 @@ export class DatePickerModal extends Modal {
 		}
 
 		bottomRow.createEl('button', { cls: 'gtd-dp-set-btn', text: t('set', this.lang) })
-			.addEventListener('click', () => doSet());
+			.addEventListener('click', () => { doSet(); });
 
 		bottomRow.createEl('button', { cls: 'gtd-dp-cancel', text: t('cancel', this.lang) })
-			.addEventListener('click', () => this.close());
+			.addEventListener('click', () => { this.close(); });
 
 		const doSet = () => {
 			const v = textInput.value.replace(/-/g, '');
@@ -120,7 +120,7 @@ export class DatePickerModal extends Modal {
 			if (e.key === 'Escape') this.close();
 		});
 
-		window.setTimeout(() => textInput.focus(), 50);
+		window.setTimeout(() => { textInput.focus(); }, 50);
 	}
 
 	onClose() {
