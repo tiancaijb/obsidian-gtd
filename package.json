@@ -6,9 +6,11 @@
 	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"build": "tsc -p tsconfig.build.json -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint .",
+		"test": "vitest run",
+		"test:watch": "vitest",
 		"dev:vault": "node esbuild.config.mjs --vault \"/mnt/c/Users/wangy/Documents/Obsidian Vault\""
 	},
 	"keywords": [],
@@ -27,6 +29,7 @@
 		"obsidian": "latest",
 		"tsx": "^4.22.4",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "^8.59.1"
+		"typescript-eslint": "^8.59.1",
+		"vitest": "^4.1.10"
 	}
 }
