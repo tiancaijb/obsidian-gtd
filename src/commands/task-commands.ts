@@ -1,7 +1,6 @@
 import { Editor, MarkdownView, Notice } from 'obsidian';
 import OrgGtdPlugin from '../main';
 import { parseTaskLine } from '../utils/parser';
-import { t } from '../utils/i18n';
 import { Priority } from '../models/task';
 import { modifyCurrentLine, adjustIndent } from '../utils/editor-utils';
 import { computeNextDate, todayStr } from '../utils/date-utils';

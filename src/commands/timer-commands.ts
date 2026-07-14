@@ -4,12 +4,16 @@ import { isTaskLine } from '../utils/parser';
 import { t } from '../utils/i18n';
 import {
 	startTimer,
+	pauseTimer,
+	resumeTimer,
 	stopTimer,
 	getCurrentTimer,
+	getElapsed as getTimerElapsed,
 	formatDuration,
 } from '../utils/timer';
 import { startPomodoro, stopPomodoro } from '../utils/pomodoro';
 import { appendClockLog } from '../utils/file-ops';
+import { TimerAPI } from '../views/agenda-view';
 
 /**
  * Toggle timer on a task: start if none running, stop+log if same task,
@@ -64,6 +68,41 @@ function toggleTimer(
 	}
 	startTimer(filePath, line);
 	new Notice(t('timerStarted', plugin.settings.lang));
+}
+
+/**
+ * Create the TimerAPI object used by AgendaView to control the timer.
+ */
+export function createTimerAPI(plugin: OrgGtdPlugin): TimerAPI {
+	const lang = () => plugin.settings.lang;
+	return {
+		start: (path: string, line: number) => startTimer(path, line),
+		pause: () => pauseTimer(),
+		resume: () => resumeTimer(),
+		stop: () => stopTimer(),
+		getCurrent: () => getCurrentTimer(),
+		getElapsed: () => getTimerElapsed(),
+		stopAndLog: (path: string, line: number) => {
+			const result = stopTimer();
+			if (!result) return;
+			const dur = formatDuration(result.elapsedMs);
+			if (result.elapsedMs < 60000) {
+				new Notice(
+					`\u23f1 ${dur} \u2014 ${t('timerTooShort', lang())}`,
+				);
+				return;
+			}
+			void appendClockLog(
+				plugin,
+				path,
+				line,
+				result.startDate,
+				result.endDate,
+				lang(),
+			);
+			new Notice(`\u23f1 ${dur}`);
+		},
+	};
 }
 
 /**

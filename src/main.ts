@@ -1,31 +1,24 @@
 import { Plugin, Notice } from 'obsidian';
-import { t, gtdFilenames } from './utils/i18n';
 import { GtdPluginSettings, GtdSettingTab, DEFAULT_SETTINGS } from './settings';
 import { gtdDecorationField } from './utils/editor-ext';
-import { AgendaView, AGENDA_VIEW_TYPE, TimerAPI } from './views/agenda-view';
+import { AgendaView, AGENDA_VIEW_TYPE } from './views/agenda-view';
 import { TimelineView, TIMELINE_VIEW_TYPE } from './views/timeline-view';
 import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import {
-	startTimer,
-	pauseTimer,
-	resumeTimer,
-	stopTimer,
 	getCurrentTimer,
-	getElapsed as getTimerElapsed,
-	formatDuration,
 	setTickCallback,
 } from './utils/timer';
 import {
 	setPomodoroConfig,
 	setPomodoroCallbacks,
-	PomodoroPhase,
-	PomodoroState,
 	setRegisterIntervalFn as setPomodoroRegisterIntervalFn,
+	setupPomodoroCallbacks,
 } from './utils/pomodoro';
 import { checkMorningReminder } from './utils/morning-reminder';
-import { appendClockLog } from './utils/file-ops';
+import { ensureGtdFolders } from './utils/file-ops';
 import { toggleAgendaView, activateAgendaView } from './utils/view-utils';
 import { registerCommands } from './commands/index';
+import { createTimerAPI } from './commands/timer-commands';
 
 export default class OrgGtdPlugin extends Plugin {
 	settings: GtdPluginSettings = { ...DEFAULT_SETTINGS };
@@ -43,7 +36,9 @@ export default class OrgGtdPlugin extends Plugin {
 
 		// Ensure GTD folder structure exists
 		this.app.workspace.onLayoutReady(() => {
-			void this.ensureGtdFolders();
+			void ensureGtdFolders(this, this.settings).then((inboxPath) => {
+				this.settings.inboxPath = inboxPath;
+			});
 			void checkMorningReminder(this);
 		});
 
@@ -74,82 +69,10 @@ export default class OrgGtdPlugin extends Plugin {
 		);
 
 		// --- Pomodoro setup ---
-		setPomodoroCallbacks(
-			() => {
-				const leaves =
-					this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-				const leaf = leaves[0];
-				if (leaf?.view instanceof AgendaView) {
-					leaf.view.refreshPomodoro();
-				}
-			},
-			(phase: PomodoroPhase, ps: PomodoroState) => {
-				const name =
-					phase === 'focus'
-						? 'Focus'
-						: phase === 'shortBreak'
-							? 'Break'
-							: 'Long break';
-				new Notice('Pomodoro ' + name + ' finished!');
-				if (
-					'Notification' in window &&
-					Notification.permission === 'granted'
-				) {
-					new Notification('GTD Pomodoro', {
-						body: `${name} finished!`,
-					});
-				}
-				// Write CLOCK record when focus ends
-				if (
-					phase === 'focus' &&
-					ps.taskFilePath !== null &&
-					ps.taskLine !== null &&
-					typeof ps.focusStartTime === 'number' &&
-					ps.focusStartTime > 0
-				) {
-					const endDate = new Date();
-					const startDate = new Date(ps.focusStartTime);
-					void appendClockLog(
-						this,
-						ps.taskFilePath,
-						ps.taskLine,
-						startDate,
-						endDate,
-						this.settings.lang,
-					);
-				}
-			},
-		);
+		setupPomodoroCallbacks(this);
 
 		// --- Agenda view (sidebar) ---
-		const timerAPI: TimerAPI = {
-			start: (path: string, line: number) => startTimer(path, line),
-			pause: () => pauseTimer(),
-			resume: () => resumeTimer(),
-			stop: () => stopTimer(),
-			getCurrent: () => getCurrentTimer(),
-			getElapsed: () => getTimerElapsed(),
-			stopAndLog: (path: string, line: number) => {
-				const result = stopTimer();
-				if (!result) return;
-				const dur = formatDuration(result.elapsedMs);
-				if (result.elapsedMs < 60000) {
-					new Notice(
-						`⏱ ${dur} — ${t('timerTooShort', this.settings.lang)}`,
-					);
-					return;
-				}
-				void appendClockLog(
-					this,
-					path,
-					line,
-					result.startDate,
-					result.endDate,
-					this.settings.lang,
-				);
-				new Notice(`⏱ ${dur}`);
-			},
-		};
+		const timerAPI = createTimerAPI(this);
 
 		this.registerView(
 			AGENDA_VIEW_TYPE,
@@ -256,30 +179,4 @@ export default class OrgGtdPlugin extends Plugin {
 		}
 	}
 
-	private async ensureGtdFolders() {
-		const base = this.settings.gtdFolder;
-
-		// Ensure base folder exists
-		try {
-			if (!(await this.app.vault.adapter.exists(base))) {
-				await this.app.vault.createFolder(base);
-			}
-		} catch (e) {
-			console.warn('Failed to create GTD base folder:', e);
-		}
-
-		// Create GTD files with combined English-Chinese names
-		for (const fname of Object.values(gtdFilenames)) {
-			const filePath = `${base}/${fname}.md`;
-			try {
-				if (!(await this.app.vault.adapter.exists(filePath))) {
-					await this.app.vault.create(filePath, '\n');
-				}
-			} catch (e) {
-				console.warn(`Failed to create GTD file "${filePath}":`, e);
-			}
-		}
-
-		this.settings.inboxPath = `${base}/${gtdFilenames.inbox}.md`;
-	}
 }

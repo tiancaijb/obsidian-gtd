@@ -1,3 +1,8 @@
+import { Notice, Plugin } from 'obsidian';
+import { AgendaView, AGENDA_VIEW_TYPE } from '../views/agenda-view';
+import { appendClockLog } from './file-ops';
+import { Lang } from './i18n';
+
 /**
  * Pomodoro timer — focus sessions with short/long breaks.
  * Integrates with task timing: a pomodoro session can be linked to a task.
@@ -273,6 +278,66 @@ export function formatPomodoroTime(sec: number): string {
 	const m = Math.floor(sec / 60);
 	const s = sec % 60;
 	return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+// ---------------------------------------------------------------------------
+// Plugin lifecycle helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Setup pomodoro lifecycle callbacks on a plugin instance.
+ * Registers a tick callback (refreshes agenda view) and a phase-end callback
+ * (shows notification + optionally writes CLOCK record after focus).
+ */
+export function setupPomodoroCallbacks(
+	plugin: Plugin & { settings: { lang: Lang } },
+): void {
+	setPomodoroCallbacks(
+		() => {
+			const leaves =
+				plugin.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
+			const leaf = leaves[0];
+			if (leaf?.view instanceof AgendaView) {
+				leaf.view.refreshPomodoro();
+			}
+		},
+		(phase: PomodoroPhase, ps: PomodoroState) => {
+			const name =
+				phase === 'focus'
+					? 'Focus'
+					: phase === 'shortBreak'
+						? 'Break'
+						: 'Long break';
+			new Notice('Pomodoro ' + name + ' finished!');
+			if (
+				'Notification' in window &&
+				Notification.permission === 'granted'
+			) {
+				new Notification('GTD Pomodoro', {
+					body: `${name} finished!`,
+				});
+			}
+			// Write CLOCK record when focus ends
+			if (
+				phase === 'focus' &&
+				ps.taskFilePath !== null &&
+				ps.taskLine !== null &&
+				typeof ps.focusStartTime === 'number' &&
+				ps.focusStartTime > 0
+			) {
+				const endDate = new Date();
+				const startDate = new Date(ps.focusStartTime);
+				void appendClockLog(
+					plugin,
+					ps.taskFilePath,
+					ps.taskLine,
+					startDate,
+					endDate,
+					plugin.settings.lang,
+				);
+			}
+		},
+	);
 }
 
 // ---------------------------------------------------------------------------

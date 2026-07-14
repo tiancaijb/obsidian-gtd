@@ -1,4 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { obsidianMockModule } from '../helpers/obsidian-mock';
+
+vi.mock('obsidian', () => obsidianMockModule());
+
 import {
 	resetPomodoro,
 	startPomodoro,
