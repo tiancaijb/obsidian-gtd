@@ -38,8 +38,11 @@ describe('totalMinutes', () => {
 
 describe('formatDuration', () => {
   it('<1m', () => { expect(formatDuration(0)).toBe('<1m'); });
+  it('1m', () => { expect(formatDuration(1)).toBe('1m'); });
   it('5m', () => { expect(formatDuration(5)).toBe('5m'); });
+  it('59m', () => { expect(formatDuration(59)).toBe('59m'); });
   it('1h', () => { expect(formatDuration(60)).toBe('1h'); });
+  it('1h 1m', () => { expect(formatDuration(61)).toBe('1h 1m'); });
   it('1h 30m', () => { expect(formatDuration(90)).toBe('1h 30m'); });
   it('2h 30m', () => { expect(formatDuration(150)).toBe('2h 30m'); });
   it('10h', () => { expect(formatDuration(600)).toBe('10h'); });
