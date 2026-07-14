@@ -43,7 +43,15 @@ export function computeNextDate(scheduled: string, repeat: string): string | nul
 	switch (unit) {
 		case 'd': date.setDate(date.getDate() + amount); break;
 		case 'w': date.setDate(date.getDate() + amount * 7); break;
-		case 'm': date.setMonth(date.getMonth() + amount); break;
+		case 'm': {
+		const targetDay = date.getDate();
+		date.setMonth(date.getMonth() + amount);
+		if (date.getDate() !== targetDay) {
+			// Overflow: target month doesn't have enough days, clamp to last day
+			date.setDate(0);
+		}
+		break;
+	}
 	}
 	return formatDate(date);
 }
