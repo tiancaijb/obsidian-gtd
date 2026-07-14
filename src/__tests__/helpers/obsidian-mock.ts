@@ -86,6 +86,7 @@ export class MockWorkspaceLeaf {
 
 export class MockItemView {
 	contentEl: MockHTMLElement;
+	containerEl: MockHTMLElement;
 	app: MockApp;
 	leaf: MockWorkspaceLeaf;
 
@@ -93,6 +94,10 @@ export class MockItemView {
 		this.leaf = leaf;
 		this.app = new MockApp();
 		this.contentEl = new MockHTMLElement();
+		// containerEl needs at least 2 children for children[1] (content area)
+		this.containerEl = new MockHTMLElement();
+		this.containerEl.createDiv({ cls: 'gtd-header-panel' });
+		this.containerEl.createDiv({ cls: 'gtd-content-area' });
 	}
 
 	getViewType(): string {
@@ -295,13 +300,80 @@ export class MockPlugin {
 // ─── HTMLElement mock (minimal subset) ────────────────────────────────────
 
 export class MockHTMLElement {
-	private _tagName = 'div';
-	private _children: MockHTMLElement[] = [];
-	private _classList: Set<string> = new Set();
-	private _style: Record<string, string> = {};
-	private _textContent = '';
-	private _listeners: Map<string, EventListener> = new Map();
-	private _attributes: Map<string, string> = new Map();
+	_tagName = 'div';
+	_children: MockHTMLElement[] = [];
+	_classList: Set<string> = new Set();
+	_style: Record<string, string> = {};
+	_textContent = '';
+	_listeners: Map<string, EventListener> = new Map();
+	_attributes: Map<string, string> = new Map();
+	parentNode: MockHTMLElement | null = null;
+	_value = '';
+	_checked = false;
+
+	get value(): string {
+		return this._value;
+	}
+
+	set value(v: string) {
+		this._value = v;
+	}
+
+	get checked(): boolean {
+		return this._checked;
+	}
+
+	set checked(v: boolean) {
+		this._checked = v;
+	}
+
+	get className(): string {
+		return Array.from(this._classList).join(' ');
+	}
+
+	set className(value: string) {
+		this._classList.clear();
+		for (const cls of value.split(' ')) {
+			if (cls) this._classList.add(cls);
+		}
+	}
+
+	get children(): MockHTMLElement[] {
+		return this._children;
+	}
+
+	get tagName(): string {
+		return this._tagName;
+	}
+
+	get style(): Record<string, string> {
+		return this._style;
+	}
+
+	get classList(): { add: (c: string) => void; remove: (c: string) => void; contains: (c: string) => boolean } {
+		return {
+			add: (c: string) => { this._classList.add(c); },
+			remove: (c: string) => { this._classList.delete(c); },
+			contains: (c: string) => this._classList.has(c),
+		};
+	}
+
+	setAttr(name: string, value: string): void {
+		this._attributes.set(name, value);
+	}
+
+	getAttribute(name: string): string | null {
+		return this._attributes.get(name) ?? null;
+	}
+
+	appendChild(child: MockHTMLElement): void {
+		this._children.push(child);
+		child.parentNode = this;
+	}
+
+	focus(): void {
+		// no-op
+	}
 
 	// Store event listeners added via .addEventListener
 	addEventListener(event: string, handler: EventListener): void {
@@ -364,6 +436,60 @@ export class MockHTMLElement {
 	}
 }
 
+// ─── Modal (minimal stub) ─────────────────────────────────────────────────
+
+export class MockModal {
+	app: MockApp;
+	contentEl: MockHTMLElement;
+	scope: { register: (...args: unknown[]) => void };
+
+	constructor(app: MockApp) {
+		this.app = app;
+		this.contentEl = new MockHTMLElement();
+		this.scope = { register: () => {} };
+	}
+
+	onOpen(): void {
+		// no-op
+	}
+
+	onClose(): void {
+		// no-op
+	}
+
+	close(): void {
+		this.onClose();
+	}
+}
+
+// ─── PluginSettingTab (minimal stub) ───────────────────────────────────────
+
+export class MockPluginSettingTab {
+	app: MockApp;
+	plugin: MockPlugin;
+	containerEl: MockHTMLElement;
+
+	constructor(app: MockApp, plugin: MockPlugin) {
+		this.app = app;
+		this.plugin = plugin;
+		this.containerEl = new MockHTMLElement();
+	}
+
+	display(): void {
+		// no-op
+	}
+}
+
+// ─── Platform (minimal stub) ───────────────────────────────────────────────
+
+export const MockPlatform = {
+	isDesktop: true,
+	isMobile: false,
+	isIosApp: false,
+	isAndroidApp: false,
+	isDesktopApp: true,
+};
+
 // ─── Setting (minimal stub) ───────────────────────────────────────────────
 
 export class MockSetting {
@@ -421,6 +547,9 @@ export function obsidianMockModule() {
 		Editor: MockEditor,
 		Setting: MockSetting,
 		Workspace: MockWorkspace,
+		Modal: MockModal,
+		PluginSettingTab: MockPluginSettingTab,
+		Platform: MockPlatform,
 		MockApp,
 		MockWorkspace,
 		MockWorkspaceLeaf,
@@ -432,6 +561,8 @@ export function obsidianMockModule() {
 		MockMarkdownView,
 		MockPlugin,
 		MockSetting,
+		MockModal,
+		MockPluginSettingTab,
 		createMockApp,
 		default: {
 			ItemView: MockItemView,
@@ -445,6 +576,9 @@ export function obsidianMockModule() {
 			Editor: MockEditor,
 			Setting: MockSetting,
 			Workspace: MockWorkspace,
+			Modal: MockModal,
+			PluginSettingTab: MockPluginSettingTab,
+			Platform: MockPlatform,
 		},
 	};
 }

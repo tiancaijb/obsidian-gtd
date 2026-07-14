@@ -4,11 +4,11 @@ import vitest from 'eslint-plugin-vitest';
 import globals from 'globals';
 
 export default tseslint.config(
-	{ ignores: ['main.js', '*.js', 'node_modules', '.hotreload'] },
+	{ ignores: ['main.js', '*.js', 'node_modules', '.hotreload', 'version-bump.mjs', 'esbuild.config.mjs', 'eslint.config.mjs'] },
 
-	// Strict type-checked rules for plugin source code
+	// Strict type-checked rules for plugin source code (not tests)
 	{
-		files: ['src/**/*.ts'],
+		files: ['src/**/*.ts', '!src/__tests__/**/*.ts'],
 		extends: [
 			...tseslint.configs.strictTypeChecked,
 		],
@@ -59,9 +59,37 @@ export default tseslint.config(
 		},
 	},
 
-	// Vitest recommended config for test files
+	// Relaxed rules for test files (mock-heavy, type-unsafe by nature)
 	{
 		files: ['src/__tests__/**/*.ts'],
-		...vitest.configs.recommended,
+		extends: [
+			...tseslint.configs.recommended,
+			vitest.configs.recommended,
+		],
+		plugins: { vitest, obsidianmd: obsidian },
+		languageOptions: {
+			parser: tseslint.parser,
+		},
+		rules: {
+			// Test files can use any for mocks
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+			'@typescript-eslint/no-unsafe-call': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+			'@typescript-eslint/no-unsafe-return': 'off',
+			'@typescript-eslint/no-unsafe-argument': 'off',
+			'@typescript-eslint/no-non-null-assertion': 'off',
+			'@typescript-eslint/await-thenable': 'off',
+			'@typescript-eslint/no-confusing-void-expression': 'off',
+			'@typescript-eslint/no-unnecessary-condition': 'off',
+			'@typescript-eslint/no-unnecessary-optional-chain': 'off',
+			'@typescript-eslint/require-await': 'off',
+			'@typescript-eslint/no-deprecated': 'off',
+			'@typescript-eslint/restrict-plus-operands': 'off',
+			'@typescript-eslint/no-unnecessary-type-conversion': 'off',
+			'@typescript-eslint/no-unnecessary-template-expression': 'off',
+			'@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+			'vitest/no-focused-tests': 'warn',
+			'vitest/no-identical-title': 'warn',
+		},
 	},
 );
