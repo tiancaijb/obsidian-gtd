@@ -23,7 +23,7 @@ function hashColor(key: string): string {
 	for (let i = 0; i < key.length; i++) {
 		hash = key.charCodeAt(i) + (hash << 5) - hash;
 	}
-	return COLORS[Math.abs(hash) % COLORS.length]!;
+	return COLORS[Math.abs(hash) % COLORS.length] ?? '#888';
 }
 
 export class TimelineView extends ItemView {
@@ -91,12 +91,12 @@ export class TimelineView extends ItemView {
 			const headingStack: string[] = [];
 			let i = 0;
 			while (i < lines.length) {
-				const line = lines[i]!;
+				const line = lines[i] ?? '';
 				const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
 				if (headingMatch) {
-					const level = headingMatch[1]!.length;
+					const level = (headingMatch[1] ?? '').length;
 					// Clean heading: remove links [[...]] → keep text
-					const headingText = headingMatch[2]!.replace(/\[\[([^\]|]+)\|?\]\]/g, '$1').replace(/\[\[([^\]]+)\]\]/g, '$1');
+					const headingText = (headingMatch[2] ?? '').replace(/\[\[([^\]|]+)\|?\]\]/g, '$1').replace(/\[\[([^\]]+)\]\]/g, '$1');
 					// Pop stack to matching level
 					while (headingStack.length >= level) { headingStack.pop(); }
 					headingStack.push(headingText);
@@ -106,7 +106,9 @@ export class TimelineView extends ItemView {
 				if (task) {
 					const pathPrefix = headingStack.length > 0 ? headingStack.join(' > ') + ' > ' : '';
 					for (let j = i + 1; j < lines.length && j <= i + task.metaLineCount + 10; j++) {
-						const recs = extractClockRecords([lines[j]!]);
+						const clockLine = lines[j];
+					if (!clockLine) continue;
+					const recs = extractClockRecords([clockLine]);
 						const dayRecs = filterByDate(recs, this.dateStr);
 						for (const rec of dayRecs) {
 							entries.push({ record: rec, taskText: pathPrefix + task.text, filePath: file.path });

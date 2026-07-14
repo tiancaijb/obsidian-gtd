@@ -163,7 +163,10 @@ export class AgendaView extends ItemView {
 		const openView = (type: string) => {
 			const existing = this.app.workspace.getLeavesOfType(type);
 			if (existing.length > 0) {
-				this.app.workspace.revealLeaf(existing[0]!);
+				const existingLeaf = existing[0];
+				if (existingLeaf) {
+					this.app.workspace.revealLeaf(existingLeaf);
+				}
 			} else {
 				const leaf = this.app.workspace.getRightLeaf(false);
 				if (leaf) {
@@ -253,8 +256,10 @@ export class AgendaView extends ItemView {
 			const lines = content.split('\n');
 
 			for (let i = 0; i < lines.length; i++) {
-				if (!isTaskLine(lines[i]!)) continue;
-				if (isMetaLine(lines[i]!)) continue; // skip if this is actually a meta line
+				const currentLine = lines[i];
+				if (!currentLine) continue;
+				if (!isTaskLine(currentLine)) continue;
+				if (isMetaLine(currentLine)) continue; // skip if this is actually a meta line
 
 				const task = parseTaskLines(lines, i);
 				if (!task) continue;
@@ -279,37 +284,36 @@ export class AgendaView extends ItemView {
 
 	private groupTasks(entries: TaskEntry[]) {
 		const titles = groupTitles(this.settings.lang);
-		const groups: { title: string; entries: TaskEntry[] }[] = [
-			{ title: titles[0]!, entries: [] },
-			{ title: titles[1]!, entries: [] },
-			{ title: titles[2]!, entries: [] },
-			{ title: titles[3]!, entries: [] },
-			{ title: titles[4]!, entries: [] },
-		];
+		const todayGroup = { title: titles[0] ?? '', entries: [] as TaskEntry[] };
+		const thisWeekGroup = { title: titles[1] ?? '', entries: [] as TaskEntry[] };
+		const thisMonthGroup = { title: titles[2] ?? '', entries: [] as TaskEntry[] };
+		const futureGroup = { title: titles[3] ?? '', entries: [] as TaskEntry[] };
+		const noDateGroup = { title: titles[4] ?? '', entries: [] as TaskEntry[] };
 
 		const { weekStartDay, monthStartDay } = this.settings;
 
 		for (const e of entries) {
 			if (!e.date) {
-				groups[4]!.entries.push(e);
+				noDateGroup.entries.push(e);
 				continue;
 			}
 			// Cumulative: This Week includes Today; This Month includes both
 			if (isToday(e.date)) {
-				groups[0]!.entries.push(e);
-				groups[1]!.entries.push(e);
-				groups[2]!.entries.push(e);
+				todayGroup.entries.push(e);
+				thisWeekGroup.entries.push(e);
+				thisMonthGroup.entries.push(e);
 			} else if (isThisWeek(e.date, weekStartDay)) {
-				groups[1]!.entries.push(e);
-				groups[2]!.entries.push(e);
+				thisWeekGroup.entries.push(e);
+				thisMonthGroup.entries.push(e);
 			} else if (isThisMonth(e.date, monthStartDay)) {
-				groups[2]!.entries.push(e);
+				thisMonthGroup.entries.push(e);
 			} else {
-				groups[3]!.entries.push(e);
+				futureGroup.entries.push(e);
 			}
 		}
 
-		return groups.filter((g) => g.entries.length > 0);
+		return [todayGroup, thisWeekGroup, thisMonthGroup, futureGroup, noDateGroup]
+			.filter((g) => g.entries.length > 0);
 	}
 
 	// ── Render ──

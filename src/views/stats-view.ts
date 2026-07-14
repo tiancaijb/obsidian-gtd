@@ -27,7 +27,7 @@ function hashColor(key: string): string {
 	for (let i = 0; i < key.length; i++) {
 		hash = key.charCodeAt(i) + (hash << 5) - hash;
 	}
-	return COLORS[Math.abs(hash) % COLORS.length]!;
+	return COLORS[Math.abs(hash) % COLORS.length] ?? '#888';
 }
 
 export class StatsView extends ItemView {
@@ -171,7 +171,9 @@ export class StatsView extends ItemView {
 				if (task) {
 					const taskRecords: ClockRecord[] = [];
 					for (let j = i + 1; j < lines.length && j <= i + task.metaLineCount + 10; j++) {
-						const recs = extractClockRecords([lines[j]!]);
+						const clockLine = lines[j];
+					if (!clockLine) continue;
+					const recs = extractClockRecords([clockLine]);
 						taskRecords.push(...recs);
 					}
 					// Filter records by date range
@@ -240,7 +242,8 @@ export class StatsView extends ItemView {
 		const legend = pieContainer.createDiv({ cls: 'gtd-stats-legend' });
 
 		for (let i = 0; i < sorted.length; i++) {
-			const st = sorted[i]!;
+			const st = sorted[i];
+			if (!st) continue;
 			const pct = st.totalMin / grandTotal;
 			const angle = pct * Math.PI * 2;
 			const endAngle = accAngle + angle;
