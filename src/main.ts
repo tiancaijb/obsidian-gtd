@@ -1,6 +1,6 @@
 import { Editor, MarkdownView, Plugin, Notice } from 'obsidian';
 import { parseTaskLines, parseTaskLine, serializeTask, isTaskLine, isMetaLine } from './utils/parser';
-import { t, metaKeywords, gtdFilenames } from './utils/i18n';
+import { t, gtdFilenames } from './utils/i18n';
 import { ParsedTask, Priority } from './models/task';
 import { GtdPluginSettings, GtdSettingTab, DEFAULT_SETTINGS } from './settings';
 import { gtdDecorationField } from './utils/editor-ext';
@@ -9,9 +9,12 @@ import { TimelineView, TIMELINE_VIEW_TYPE } from './views/timeline-view';
 import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
-import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, formatClockLine, setTickCallback } from './utils/timer';
+import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, setTickCallback } from './utils/timer';
 import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState } from './utils/pomodoro';
 import { computeNextDate, todayStr } from './utils/date-utils';
+import { checkMorningReminder } from './utils/morning-reminder';
+import { appendClockLog } from './utils/file-ops';
+import { toggleAgendaView, activateAgendaView, openOrRevealView } from './utils/view-utils';
 
 const PRIORITIES: (Priority | null)[] = ['A', 'B', 'C', null];
 
@@ -29,7 +32,7 @@ export default class OrgGtdPlugin extends Plugin {
 		// Ensure GTD folder structure exists
 		this.app.workspace.onLayoutReady(() => {
 			void this.ensureGtdFolders();
-			void this.checkMorningReminder();
+			void checkMorningReminder(this);
 		});
 
 		// --- Commands ---
@@ -199,7 +202,7 @@ export default class OrgGtdPlugin extends Plugin {
 				if (phase === 'focus' && ps.taskFilePath !== null && ps.taskLine !== null && typeof ps.focusStartTime === 'number' && ps.focusStartTime > 0) {
 					const endDate = new Date();
 					const startDate = new Date(ps.focusStartTime);
-					void this.appendClockLog(ps.taskFilePath, ps.taskLine, startDate, endDate);
+					void appendClockLog(this, ps.taskFilePath, ps.taskLine, startDate, endDate, this.settings.lang);
 				}
 			},
 		);
@@ -245,19 +248,19 @@ export default class OrgGtdPlugin extends Plugin {
 					new Notice(`⏱ ${dur} — ${t('timerTooShort', this.settings.lang)}`);
 					return;
 				}
-				void this.appendClockLog(path, line, result.startDate, result.endDate);
+				void appendClockLog(this, path, line, result.startDate, result.endDate, this.settings.lang);
 				new Notice(`⏱ ${dur}`);
 			},
 		};
 
 		this.registerView(AGENDA_VIEW_TYPE, (leaf) => new AgendaView(leaf, this.settings, timerAPI));
 
-		this.addRibbonIcon('list-checks', 'GTD', () => { this.toggleAgendaView(); });
+		this.addRibbonIcon('list-checks', 'GTD', () => { toggleAgendaView(this.app.workspace); });
 
 		this.addCommand({
 			id: 'gtd-open-agenda',
 			name: 'Open sidebar',
-			callback: () => { this.toggleAgendaView(); },
+			callback: () => { toggleAgendaView(this.app.workspace); },
 		});
 
 		this.addCommand({
@@ -277,42 +280,20 @@ export default class OrgGtdPlugin extends Plugin {
 		this.addCommand({
 			id: 'gtd-stats',
 			name: 'Open time statistics',
-			callback: () => {
-				const existing = this.app.workspace.getLeavesOfType(STATS_VIEW_TYPE);
-				if (existing.length === 0) {
-					const leaf = this.app.workspace.getRightLeaf(false);
-					if (leaf) {
-					void leaf.setViewState({ type: STATS_VIEW_TYPE });
-						void this.app.workspace.revealLeaf(leaf);
-					}
-				} else {
-					void this.app.workspace.revealLeaf(existing[0]!);
-				}
-			},
+			callback: () => { openOrRevealView(this.app.workspace, STATS_VIEW_TYPE); },
 		});
 
 		this.addCommand({
 			id: 'gtd-timeline',
 			name: 'Open time timeline',
-			callback: () => {
-				const existing = this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE);
-				if (existing.length === 0) {
-					const leaf = this.app.workspace.getRightLeaf(false);
-					if (leaf) {
-					void leaf.setViewState({ type: TIMELINE_VIEW_TYPE });
-						void this.app.workspace.revealLeaf(leaf);
-					}
-				} else {
-					void this.app.workspace.revealLeaf(existing[0]!);
-				}
-			},
+			callback: () => { openOrRevealView(this.app.workspace, TIMELINE_VIEW_TYPE); },
 		});
 
 		// Auto-open agenda only if not already open
 		this.app.workspace.onLayoutReady(() => {
 			const existing = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 			if (existing.length === 0) {
-				void this.activateAgendaView();
+				void activateAgendaView(this.app.workspace);
 			}
 		});
 
@@ -446,7 +427,7 @@ export default class OrgGtdPlugin extends Plugin {
 				new Notice(`⏱ ${dur} — too short, not recorded`);
 				return;
 			}
-			void this.appendClockLog(filePath, line, result.startDate, result.endDate);
+			void appendClockLog(this, filePath, line, result.startDate, result.endDate, this.settings.lang);
 			new Notice(`⏱ ${dur}`);
 			return;
 		}
@@ -454,45 +435,10 @@ export default class OrgGtdPlugin extends Plugin {
 		// Different task: stop old (and log it if long enough), start new
 		const oldResult = stopTimer();
 		if (oldResult && oldResult.elapsedMs >= 60000) {
-			void this.appendClockLog(current.filePath, current.line, oldResult.startDate, oldResult.endDate);
+			void appendClockLog(this, current.filePath, current.line, oldResult.startDate, oldResult.endDate, this.settings.lang);
 		}
 		startTimer(filePath, line);
 		new Notice(t('timerStarted', this.settings.lang));
-	}
-
-	async appendClockLog(filePath: string, line: number, start: Date, end: Date) {
-		try {
-			const content = await this.app.vault.adapter.read(filePath);
-			const lines = content.split('\n');
-			const task = parseTaskLines(lines, line);
-			if (!task) return;
-
-			const clockLine = formatClockLine(start, end, metaKeywords[this.settings.lang].clock);
-			const insertAt = line + task.metaLineCount + 1;
-			lines.splice(insertAt, 0, clockLine);
-			await this.app.vault.adapter.write(filePath, lines.join('\n'));
-
-			const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-			if (leaves.length > 0) {
-				void (leaves[0]!.view as unknown as AgendaView).refresh();
-			}
-		} catch (_e) { void _e; }
-	}
-
-	toggleAgendaView() {
-		const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
-		if (leaves.length > 0) {
-			leaves[0]!.detach();
-		} else {
-			void this.activateAgendaView();
-		}
-	}
-
-	async activateAgendaView() {
-		const leaf = this.app.workspace.getRightLeaf(false);
-		if (!leaf) return;
-		await leaf.setViewState({ type: AGENDA_VIEW_TYPE, active: true });
-		void this.app.workspace.revealLeaf(leaf);
 	}
 
 	onunload() {}
@@ -532,50 +478,5 @@ export default class OrgGtdPlugin extends Plugin {
 		for (const leaf of stLeaves) {
 			(leaf.view as unknown as StatsView).updateSettings(this.settings.lang);
 		}
-	}
-
-	/**
-	 * Check if it's morning and remind user about sunlight if not done yet.
-	 */
-	private async checkMorningReminder() {
-		if (!this.settings.morningReminderEnabled) return;
-
-		const now = new Date();
-		const minutes = now.getHours() * 60 + now.getMinutes();
-		if (minutes < this.settings.morningReminderStart || minutes > this.settings.morningReminderEnd) return; // 6:30-8:30
-
-		const filePath = this.settings.inboxPath;
-		try {
-			const content = await this.app.vault.adapter.read(filePath);
-			const today = now.toISOString().slice(0, 10);
-			// Check if already done today
-			if (content.includes('DONE 走出房间门') && content.includes(today)) return;
-			// If task exists in inbox but not done, also skip
-			if (content.includes('走出房间门')) return;
-
-			const reminder = new Notice('☀️ 走出房间门了吗？', 10000);
-			reminder.messageEl.onclick = async () => {
-			try {
-				const lines = content.split('\n');
-				for (let i = 0; i < lines.length; i++) {
-					if (lines[i]!.includes('走出房间门') && lines[i]!.includes('[ ]')) {
-						lines[i] = lines[i]!.replace('[ ]', '[X]');
-						// Find SCHEDULED line and shift by REPEAT interval
-						for (let j = i + 1; j < lines.length && lines[j]!.match(/^\s+/); j++) {
-							const m = lines[j]!.match(/SCHEDULED:\s*<([^>]+)>/i);
-							const rm = lines[j]!.match(/REPEAT:\s*<([^>]+)>/i);
-							if (m && rm) {
-								const next = computeNextDate(todayStr(), rm[1]!);
-								if (next) lines[j] = lines[j]!.replace(/<[^>]+>/, `<${next}>`);
-							}
-						}
-						break;
-					}
-				}
-				await this.app.vault.adapter.write(filePath, lines.join('\n'));
-				new Notice('✅ 已标记');
-			} catch (_e) { void _e; }
-		};
-		} catch (_e) { void _e; }
 	}
 }
