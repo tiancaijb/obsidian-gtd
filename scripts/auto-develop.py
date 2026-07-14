@@ -140,7 +140,11 @@ def git_commit(ticket_num: str, ticket_name: str) -> bool:
 
     msg = f"ticket-{ticket_num}: {ticket_name.replace('-', ' ')}"
     result = subprocess.run(
-        ["git", "commit", "-am", msg],
+        ["git", "add", "-A"],
+        cwd=PROJECT_DIR, capture_output=True, text=True, timeout=15,
+    )
+    result = subprocess.run(
+        ["git", "commit", "-m", msg],
         cwd=PROJECT_DIR, capture_output=True, text=True, timeout=30,
     )
     if result.returncode != 0:
@@ -207,11 +211,11 @@ def main():
                 break
             else:
                 print(f"  ⏳ Verification failed, attempt {attempt}/{MAX_RETRIES}")
-                # Stash or revert changes before retry
+                # Revert tracked file changes before retry (leave untracked files alone)
                 subprocess.run(["git", "checkout", "--", "."], cwd=PROJECT_DIR, capture_output=True, timeout=15)
-                # Also clean untracked files that might have been created
+                # Revert newly created tracked files if any (e.g. from partial commit)
                 subprocess.run(
-                    ["git", "clean", "-fd", "--", "src/"],
+                    ["git", "clean", "-f", "--", "src/"],
                     cwd=PROJECT_DIR, capture_output=True, timeout=15,
                 )
 
