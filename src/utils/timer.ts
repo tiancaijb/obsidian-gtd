@@ -1,5 +1,11 @@
 /**
  * Task timer — one active timer at a time, like org-mode.
+ *
+ * Uses immutable state updates (each mutation creates a new TimerState
+ * object). The caller owns the interval lifecycle — no module-level
+ * intervalId or registerIntervalFn. State-change functions call
+ * tickCallback immediately so the UI can react; the caller should set
+ * up its own periodic interval for elapsed-time display updates.
  */
 
 export interface TimerState {
@@ -12,54 +18,46 @@ export interface TimerState {
 
 let currentTimer: TimerState | null = null;
 let tickCallback: (() => void) | null = null;
-let intervalId: number | null = null;
-let registerIntervalFn: ((id: number) => void) | null = null;
 
 function notifyTick() { tickCallback?.(); }
-
-function startInterval() {
-	if (intervalId !== null) return;
-	intervalId = window.setInterval(notifyTick, 5000); // every 5s is enough
-	registerIntervalFn?.(intervalId);
-}
-
-function stopInterval() {
-	if (intervalId !== null) { window.clearInterval(intervalId); intervalId = null; }
-}
 
 export function getCurrentTimer(): TimerState | null { return currentTimer; }
 export function setTickCallback(cb: (() => void) | null) { tickCallback = cb; }
 
 /**
- * Set a function to register the interval ID with the plugin lifecycle.
- * When set, every new interval created by startInterval() will be passed
- * to this function (typically `plugin.registerInterval`), so it is
- * automatically cleaned up on plugin unload.
+ * Reset all internal state — for testing use only.
  */
-export function setRegisterIntervalFn(fn: ((id: number) => void) | null) {
-	registerIntervalFn = fn;
+export function resetTimer(): void {
+	currentTimer = null;
+	tickCallback = null;
 }
 
 export function startTimer(filePath: string, line: number): TimerState {
 	currentTimer = { filePath, line, startTime: Date.now(), elapsedMs: 0, running: true };
-	startInterval();
+	notifyTick();
 	return currentTimer;
 }
 
 export function pauseTimer(): TimerState | null {
 	if (!currentTimer?.running) return currentTimer;
-	currentTimer.elapsedMs += Date.now() - currentTimer.startTime;
-	currentTimer.running = false;
-	stopInterval();
+	currentTimer = {
+		...currentTimer,
+		elapsedMs: currentTimer.elapsedMs + Date.now() - currentTimer.startTime,
+		running: false,
+	};
+	notifyTick();
 	return currentTimer;
 }
 
 export function resumeTimer(): TimerState | null {
 	if (currentTimer?.running) return currentTimer;
 	if (!currentTimer) return null;
-	currentTimer.startTime = Date.now();
-	currentTimer.running = true;
-	startInterval();
+	currentTimer = {
+		...currentTimer,
+		startTime: Date.now(),
+		running: true,
+	};
+	notifyTick();
 	return currentTimer;
 }
 
@@ -73,7 +71,7 @@ export function stopTimer(): {
 	const startDate = new Date(currentTimer.startTime);
 
 	currentTimer = null;
-	stopInterval();
+	notifyTick();
 	return { elapsedMs: total, startDate, endDate };
 }
 

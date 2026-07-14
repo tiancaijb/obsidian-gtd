@@ -9,7 +9,7 @@ import { TimelineView, TIMELINE_VIEW_TYPE } from './views/timeline-view';
 import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
 import { CaptureModal } from './views/capture-modal';
 import { DatePickerModal } from './views/date-picker-modal';
-import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, formatDuration, setTickCallback, setRegisterIntervalFn as setTimerRegisterIntervalFn } from './utils/timer';
+import { startTimer, pauseTimer, resumeTimer, stopTimer, getCurrentTimer, getElapsed as getTimerElapsed, formatDuration, setTickCallback } from './utils/timer';
 import { setPomodoroConfig, setPomodoroCallbacks, startPomodoro, stopPomodoro, PomodoroPhase, PomodoroState, setRegisterIntervalFn as setPomodoroRegisterIntervalFn } from './utils/pomodoro';
 import { computeNextDate, todayStr } from './utils/date-utils';
 import { checkMorningReminder } from './utils/morning-reminder';
@@ -29,8 +29,7 @@ export default class OrgGtdPlugin extends Plugin {
 		this.addSettingTab(new GtdSettingTab(this.app, this));
 		this.registerEditorExtension([gtdDecorationField]);
 
-		// Register intervals for lifecycle-safe cleanup
-		setTimerRegisterIntervalFn((id) => this.registerInterval(id));
+		// Register pomodoro interval for lifecycle-safe cleanup
 		setPomodoroRegisterIntervalFn((id) => this.registerInterval(id));
 
 		// Ensure GTD folder structure exists
@@ -162,13 +161,23 @@ export default class OrgGtdPlugin extends Plugin {
 			},
 		});
 
-		// Timer tick: refresh agenda to show elapsed time
+		// Timer state-change callback: immediate UI update on start/pause/resume/stop
 		setTickCallback(() => {
 			const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 			if (leaves.length > 0) {
 				(leaves[0]!.view as unknown as AgendaView).refreshTimerOnly();
 			}
 		});
+
+		// Periodic timer display refresh (caller manages interval lifecycle)
+		this.registerInterval(window.setInterval(() => {
+			if (getCurrentTimer()?.running) {
+				const leaves = this.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
+				if (leaves.length > 0) {
+					(leaves[0]!.view as unknown as AgendaView).refreshTimerOnly();
+				}
+			}
+		}, 5000));
 
 		// --- Timer commands ---
 		this.addCommand({
@@ -243,7 +252,7 @@ export default class OrgGtdPlugin extends Plugin {
 			resume: () => resumeTimer(),
 			stop: () => stopTimer(),
 			getCurrent: () => getCurrentTimer(),
-			getElapsed: () => { const t = getCurrentTimer(); return t ? t.elapsedMs + (t.running ? Date.now() - t.startTime : 0) : 0; },
+			getElapsed: () => getTimerElapsed(),
 			stopAndLog: (path: string, line: number) => {
 				const result = stopTimer();
 				if (!result) return;
@@ -453,7 +462,6 @@ export default class OrgGtdPlugin extends Plugin {
 		// Clear callbacks to prevent stale references after plugin unload
 		setTickCallback(null);
 		setPomodoroCallbacks(null, null);
-		setTimerRegisterIntervalFn(null);
 		setPomodoroRegisterIntervalFn(null);
 	}
 
