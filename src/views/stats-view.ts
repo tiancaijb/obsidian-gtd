@@ -234,7 +234,7 @@ export class StatsView extends ItemView {
 		const svg = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
 		svg.setAttribute('width', String(SIZE));
 		svg.setAttribute('height', String(SIZE));
-		svg.setAttribute('viewBox', '0 0 ' + SIZE + ' ' + SIZE);
+		svg.setAttribute('viewBox', `0 0 ${SIZE} ${SIZE}`);
 		pieContainer.appendChild(svg);
 
 		const legend = pieContainer.createDiv({ cls: 'gtd-stats-legend' });
@@ -262,7 +262,7 @@ export class StatsView extends ItemView {
 				const x2 = CX + R * Math.cos(endAngle);
 				const y2 = CY + R * Math.sin(endAngle);
 				const large = angle > Math.PI ? 1 : 0;
-				const d = 'M' + CX + ',' + CY + ' L' + x1 + ',' + y1 + ' A' + R + ',' + R + ' 0 ' + large + ' 1 ' + x2 + ',' + y2 + ' Z';
+				const d = `M${CX},${CY} L${x1},${y1} A${R},${R} 0 ${large} 1 ${x2},${y2} Z`;
 
 				const path = activeDocument.createElementNS('http://www.w3.org/2000/svg', 'path');
 				path.setAttribute('d', d);
@@ -289,7 +289,7 @@ export class StatsView extends ItemView {
 
 			lrow.createEl('span', {
 				cls: 'gtd-stats-pct',
-				text: Math.round(pct * 100) + '%',
+				text: `${Math.round(pct * 100)}%`,
 			});
 
 			lrow.addEventListener('click',  () => {
@@ -322,10 +322,10 @@ export class StatsView extends ItemView {
 				const mins = st.totalMin % 60;
 				const pct = Math.round((st.totalMin / grandTotal) * 100);
 				csv += '"' + st.taskText.replace(/"/g, '""') + '",';
-				csv += st.sessions + ',';
-				csv += hours + 'h' + mins + 'm,';
-				csv += st.totalMin + ',';
-				csv += pct + '%\n';
+				csv += String(st.sessions) + ',';
+				csv += `${hours}h${mins}m,`;
+				csv += String(st.totalMin) + ',';
+				csv += String(pct) + '%\n';
 			}
 			const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
 			const url = URL.createObjectURL(blob);

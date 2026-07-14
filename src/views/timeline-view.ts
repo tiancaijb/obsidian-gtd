@@ -158,12 +158,12 @@ export class TimelineView extends ItemView {
 		// Hour rows (grid)
 		for (let h = START_HOUR; h <= END_HOUR; h++) {
 			const row = timeline.createDiv({ cls: 'gtd-timeline-hour-row' });
-			row.style.height = PX_PER_HOUR + 'px';
+			row.style.height = `${PX_PER_HOUR}px`;
 
 			const label = row.createEl('span', { cls: 'gtd-timeline-hour-label' });
 			const ampm = h < 12 ? 'AM' : 'PM';
 			const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
-			label.textContent = displayH + ampm;
+			label.textContent = `${displayH}${ampm}`;
 
 		}
 
@@ -189,8 +189,8 @@ export class TimelineView extends ItemView {
 			const heightPx = Math.max(8, durationH * PX_PER_HOUR);
 
 			const block = track.createDiv({ cls: 'gtd-timeline-block' });
-			block.style.top = topPx + 'px';
-			block.style.height = heightPx + 'px';
+			block.style.top = `${topPx}px`;
+			block.style.height = `${heightPx}px`;
 			block.style.background = hashColor(entry.taskText);
 
 			const label = block.createEl('span', { cls: 'gtd-timeline-block-label' });

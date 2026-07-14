@@ -392,7 +392,7 @@ export default class OrgGtdPlugin extends Plugin {
 			const newLeading = leading.length + indentDiff >= 0
 				? ' '.repeat(leading.length + indentDiff)
 				: '';
-			lines[i] = newLeading + lines[i];
+			lines[i] = newLeading + lines[i]!;
 		}
 
 		editor.setValue(lines.join('\n'));
