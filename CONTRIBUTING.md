@@ -1,15 +1,15 @@
 # Contributing to GTD Workflow
 
-Thank you for considering contributing to **GTD Workflow**! This guide will help you set up a development environment, understand the project structure, and follow the contribution workflow.
+Thank you for considering contributing to the GTD Workflow plugin for Obsidian! This guide will help you set up your development environment, understand the project structure, and follow the contribution workflow.
 
 ## Table of Contents
 
 - [Development Environment](#development-environment)
 - [Project Structure](#project-structure)
 - [Coding Standards](#coding-standards)
-- [Commit Convention](#commit-convention)
-- [Pull Request Workflow](#pull-request-workflow)
 - [Testing](#testing)
+- [Commit Message Conventions](#commit-message-conventions)
+- [Pull Request Workflow](#pull-request-workflow)
 - [Release Process](#release-process)
 
 ---
@@ -18,9 +18,9 @@ Thank you for considering contributing to **GTD Workflow**! This guide will help
 
 ### Prerequisites
 
-- **Node.js**: 20.x, 22.x, or 24.x (see [CI matrix](.github/workflows/lint.yml))
-- **npm**: Comes with Node.js
-- **Git**
+- **Node.js**: Use the current LTS version (Node.js 18+). The CI pipeline tests on 20.x, 22.x, and 24.x — any of these is safe for local development.
+- **npm**: Comes with Node.js. This project uses npm as its package manager.
+- **Git**: Required for version control and the PR workflow.
 
 ### Setup
 
@@ -31,246 +31,184 @@ cd obsidian-gtd
 
 # Install dependencies
 npm install
-
-# Build the plugin
-npm run build
 ```
 
-### Development Workflow
-
-#### Option 1: Build to a test vault (recommended)
-
-The esbuild config supports a `--vault` flag that outputs directly to an Obsidian vault's plugin folder:
+### Dev Build (Watch Mode)
 
 ```bash
-# Build once and output to a vault
-npx esbuild.config.mjs --vault "/path/to/your/vault"
+npm run dev
 ```
 
-With Hot Reload (community plugin) installed in the vault, changes auto-reload after rebuild.
+This starts esbuild in watch mode, recompiling `main.js` whenever source files change.
 
-#### Option 2: Manual copy
+### Production Build
 
 ```bash
 npm run build
 ```
 
-Then copy `main.js`, `manifest.json`, and `styles.css` to `<vault>/.obsidian/plugins/gtd-workflow/`.
+This runs TypeScript type checking (with strict settings) and then bundles the plugin into `main.js`.
 
-#### Option 3: Watch mode with WSL/Windows vault
+### Setting Up a Dev Vault
 
-If you use WSL with a Windows vault, the bundled `dev-watch.sh` polls source changes, rebuilds, and triggers Hot Reload:
+To test the plugin in Obsidian during development, you need a development vault. There are three approaches:
 
+**Option 1: Symlink (recommended)**
+
+1. Create a test vault in Obsidian (e.g., `~/dev/obsidian-gtd-vault/`).
+2. Create the plugins folder: `mkdir -p ~/dev/obsidian-gtd-vault/.obsidian/plugins/gtd-workflow/`
+3. Symlink the built files:
+   ```bash
+   ln -s /path/to/obsidian-gtd/main.js /path/to/vault/.obsidian/plugins/gtd-workflow/main.js
+   ln -s /path/to/obsidian-gtd/manifest.json /path/to/vault/.obsidian/plugins/gtd-workflow/manifest.json
+   ```
+4. Enable the plugin in Obsidian via **Settings → Community plugins**.
+
+**Option 2: Direct Copy**
+
+Run after each build:
 ```bash
-./dev-watch.sh
+cp main.js manifest.json /path/to/vault/.obsidian/plugins/gtd-workflow/
 ```
 
-Adjust the `VAULT` path in the script to match your setup.
+**Option 3: Watch with dev vault flag**
 
-### Verify Your Setup
-
+If you set up a `.env` file or use the esbuild config's vault flag:
 ```bash
-# Build should pass
-npm run build
-
-# Lint should pass
-npm run lint
-
-# All tests should pass
-npm test
+npm run dev -- --vault "/path/to/Obsidian Vault"
 ```
+This writes `main.js` and `manifest.json` directly to the vault's plugin folder on every change.
+
+> **Note**: After changing plugin files, you can reload the plugin in Obsidian via **Settings → Community plugins → Installed plugins → GTD Workflow → Reload** (or use the Obsidian Developer Tools: `Ctrl+Shift+I` → `app.plugins.reload("gtd-workflow")`).
+
+---
 
 ## Project Structure
 
 ```
 obsidian-gtd/
 ├── src/
-│   ├── main.ts                # Plugin entry point, lifecycle management
-│   ├── settings.ts            # Settings interface, defaults, settings tab
-│   ├── commands/              # Command registrations
-│   │   ├── index.ts           # Command registration hub
-│   │   ├── task-commands.ts   # Task editing commands
-│   │   ├── timer-commands.ts  # Timer and Pomodoro commands
-│   │   └── view-commands.ts   # View toggle commands
-│   ├── models/                # Data models
-│   │   └── task.ts            # Task type definitions
-│   ├── utils/                 # Utility functions
-│   │   ├── parser.ts          # Task line parsing / serialization
-│   │   ├── date-utils.ts      # Date formatting and computations
-│   │   ├── clock-parser.ts    # CLOCK record parsing
-│   │   ├── timer.ts           # Task timer logic
-│   │   ├── pomodoro.ts        # Pomodoro timer logic
-│   │   ├── file-ops.ts        # File system operations
-│   │   ├── file-cache.ts      # File caching layer
-│   │   ├── i18n.ts            # Internationalization
-│   │   ├── editor-ext.ts      # CodeMirror editor extensions
-│   │   ├── editor-utils.ts    # Editor helper functions
-│   │   ├── morning-reminder.ts# Morning sunlight reminder
-│   │   └── view-utils.ts      # View utility functions
-│   ├── views/                 # Obsidian views and modals
-│   │   ├── agenda-view.ts     # Agenda sidebar view
-│   │   ├── agenda-ui.ts       # Agenda UI components
-│   │   ├── agenda-types.ts    # Agenda-specific types
-│   │   ├── timeline-view.ts   # Timeline sidebar view
-│   │   ├── stats-view.ts      # Time statistics view
-│   │   ├── capture-modal.ts   # Quick capture modal
-│   │   └── date-picker-modal.ts# Date picker modal
-│   └── __tests__/             # Test files
-│       ├── helpers/           # Test helpers and mocks
-│       ├── setup.test.ts      # Test environment setup
-│       ├── utils/             # Utility tests
-│       └── views/             # View tests
-├── main.js                    # Bundled output (built, not committed)
-├── manifest.json              # Plugin manifest
-├── styles.css                 # Plugin styles
-├── esbuild.config.mjs         # Build configuration
-├── vitest.config.ts           # Test configuration
-├── eslint.config.mjs          # ESLint configuration
-├── tsconfig.json              # TypeScript configuration
-└── tsconfig.build.json        # TypeScript build configuration (excludes tests)
+│   ├── main.ts                  # Plugin entry point, lifecycle management
+│   ├── settings.ts              # Settings interface, defaults, settings tab
+│   ├── commands/
+│   │   ├── index.ts             # Command registration hub
+│   │   ├── task-commands.ts     # Task-related commands (toggle, cycle priority, etc.)
+│   │   ├── timer-commands.ts    # Timer and Pomodoro commands
+│   │   └── view-commands.ts     # View toggle commands
+│   ├── models/
+│   │   └── task.ts              # Task data model and types
+│   ├── utils/
+│   │   ├── parser.ts            # Markdown task parser
+│   │   ├── clock-parser.ts      # CLOCK record parser
+│   │   ├── date-utils.ts        # Date calculation helpers
+│   │   ├── editor-ext.ts        # CodeMirror editor extension
+│   │   ├── editor-utils.ts      # Editor utility functions
+│   │   ├── file-cache.ts        # File content cache with invalidation
+│   │   ├── file-ops.ts          # File I/O operations
+│   │   ├── i18n.ts              # Internationalization (Chinese, English, Japanese)
+│   │   ├── morning-reminder.ts  # Morning sunlight reminder
+│   │   ├── pomodoro.ts          # Pomodoro timer logic
+│   │   ├── timer.ts             # Per-task timer logic
+│   │   └── view-utils.ts        # View utility functions
+│   ├── views/
+│   │   ├── agenda-view.ts       # Agenda sidebar view
+│   │   ├── agenda-types.ts      # Agenda view type definitions
+│   │   ├── agenda-ui.ts         # Agenda view UI components
+│   │   ├── capture-modal.ts     # Quick capture modal
+│   │   ├── date-picker-modal.ts # Date picker modal
+│   │   ├── stats-view.ts        # Time statistics view with pie chart
+│   │   └── timeline-view.ts     # 24h timeline view
+│   └── __tests__/
+│       ├── helpers/
+│       │   └── obsidian-mock.ts      # Obsidian API mocks for tests
+│       ├── setup.test.ts             # Test environment setup
+│       ├── utils/
+│       │   ├── clock-parser.test.ts
+│       │   ├── date-utils.test.ts
+│       │   ├── i18n.test.ts
+│       │   ├── parser.test.ts
+│       │   ├── pomodoro.test.ts
+│       │   └── timer.test.ts
+│       └── views/
+│           ├── agenda-view.test.ts
+│           ├── capture-modal.test.ts
+│           ├── date-picker-modal.test.ts
+│           ├── stats-view.test.ts
+│           └── timeline-view.test.ts
+├── .github/
+│   └── workflows/
+│       └── lint.yml             # CI: build, lint, test, upload coverage
+├── manifest.json                # Obsidian plugin manifest
+├── tsconfig.json                # TypeScript configuration (strict)
+├── tsconfig.build.json          # Build-specific TS config (excludes tests)
+├── esbuild.config.mjs           # esbuild bundler configuration
+├── eslint.config.mjs            # ESLint flat configuration
+├── vitest.config.ts             # Vitest test configuration
+├── AGENTS.md                    # AI-assisted development guidelines
+└── package.json
 ```
+
+### Key Architectural Decisions
+
+- **Plugin lifecycle**: `src/main.ts` is the entry point. It keeps `onload()` and `onunload()` focused on registration and cleanup. All feature logic is delegated to separate modules.
+- **File cache**: A shared `FileCache` instance invalidates cached file contents on vault `modify`/`create`/`delete`/`rename` events, avoiding redundant reads.
+- **Task model**: Tasks are parsed from plain Markdown list items — there is no separate database. Metadata (priority, dates, CLOCK records) lives inline in the list item body.
+- **Views**: The agenda, timeline, and stats views are registered as Obsidian sidebar views. They share the same file cache and re-parse data on activation.
+- **Timer**: Timer state is managed by a singleton module (`utils/timer.ts`) that all views reference via a callback pattern.
+
+---
 
 ## Coding Standards
 
 ### TypeScript
 
-- **Strict mode** is enabled (`"strict": true` in `tsconfig.json`)
-- Target: ES2021
-- Module system: ESNext (bundled by esbuild to CJS)
-- Use `const` by default, `let` only when reassignment is needed
-- Avoid `any` — prefer `unknown` with proper type narrowing
-- Non-null assertions (`!`) are discouraged; use optional chaining or type guards instead
-- Prefix unused variables with underscore (`_unusedVar`)
+The project uses strict TypeScript:
+
+- `strict: true` in `tsconfig.json`
+- `noUncheckedIndexedAccess: true` — always check indexed access for `undefined`
+- `noImplicitReturns: true`
+- `noFallthroughCasesInSwitch: true`
+
+All source code (excluding test files) must compile without errors under these settings.
 
 ### ESLint
 
-The project has two ESLint configurations:
+The project uses ESLint with two configurations:
 
-1. **Source code** (`src/**/*.ts` excluding tests): Strict type-checked rules via `typescript-eslint` plus Obsidian plugin rules
-2. **Test files** (`src/__tests__/**/*.ts`): Relaxed rules (mocks and test helpers are inherently type-unsafe)
+1. **Source files** (`src/**/*.ts`, excluding tests): TypeScript strict type-checked rules plus `eslint-plugin-obsidianmd` for Obsidian-specific rules.
+2. **Test files** (`src/__tests__/**/*.ts`): Relaxed rules that accommodate mock-heavy code.
 
-Run linting before committing:
+Run linting before every commit:
 
 ```bash
 npm run lint
 ```
 
-Some rules are set to `warn` for gradual cleanup — new code should avoid triggering warnings.
+**Important**: Linting must pass with zero errors (warnings are acceptable but should be kept to a minimum). New code should not introduce new warnings.
 
-### Formatting
+### Code Style
 
-- **Indentation**: Tabs (width: 4)
-- **Encoding**: UTF-8
-- **Line endings**: LF
-- **Final newline**: Always present
-- **Quotes**: Single quotes for strings
-- An `.editorconfig` file is provided — ensure your editor supports it
-
-### Module Organization
-
-- **`main.ts` is minimal**: It handles plugin lifecycle (`onload`, `onunload`, `loadSettings`) and delegates everything else to modules
-- **One responsibility per file**: If a file exceeds ~200–300 lines, consider splitting
-- **Clear module boundaries**: Each module exports a focused, well-documented interface
-- **Imports**: Use relative paths within `src/` (e.g., `../../utils/parser`)
+- Use `async/await` over promise chains.
+- Handle errors gracefully — avoid silent failures.
+- Prefer early returns over deep nesting.
+- Use `this.register*` helpers (`registerEvent`, `registerView`, `registerInterval`, etc.) for everything that needs cleanup — never manually manage listener/interval lifecycle.
+- Keep functions focused and small. Split large files (over ~200–300 lines) into smaller modules.
+- Write descriptive variable and function names. Avoid abbreviations when the full word is clearer.
+- Maintain clear module boundaries — each file should have a single, well-defined responsibility.
 
 ### Naming Conventions
 
-- **Variables and functions**: `camelCase`
-- **Classes and types**: `PascalCase`
-- **Files**: `kebab-case` (e.g., `date-utils.ts`, `agenda-view.ts`)
-- **Test files**: `<module>.test.ts` co-located under `src/__tests__/` mirroring the source structure
+- **Files**: Use kebab-case for utility modules (`date-utils.ts`, `file-cache.ts`). View files use hyphenated names (`agenda-view.ts`, `stats-view.ts`).
+- **Classes**: PascalCase (`AgendaView`, `FileCache`, `GtdPluginSettings`).
+- **Functions and variables**: camelCase (`getCurrentTimer`, `fileCache`).
+- **Types and interfaces**: PascalCase (`GtdPluginSettings`, `Task`).
+- **Constants**: UPPER_SNAKE_CASE for configuration constants (`DEFAULT_SETTINGS`).
 
-## Commit Convention
-
-This project uses **semantic commit messages** following the [Conventional Commits](https://www.conventionalcommits.org/) format:
-
-```
-<type>: <short description>
-```
-
-or for scoped commits:
-
-```
-<type>(<scope>): <short description>
-```
-
-### Types
-
-| Type     | Usage                                          |
-|----------|------------------------------------------------|
-| `feat`   | A new feature                                  |
-| `fix`    | A bug fix                                      |
-| `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `perf`   | Performance improvement                        |
-| `test`   | Adding or updating tests                       |
-| `docs`   | Documentation changes                          |
-| `chore`  | Build process, dependencies, tooling           |
-| `style`  | Formatting, missing semicolons (not CSS)       |
-| `ci`     | CI/CD configuration changes                    |
-
-### Examples
-
-```
-feat: add quick capture hotkey
-fix(parser): handle empty SCHEDULED lines
-refactor: extract task formatting to standalone module
-test: add parser edge case tests
-docs: update README with new command table
-chore(deps): bump esbuild to 0.25
-```
-
-### Commitiquette
-
-- Keep the subject line under **72 characters**
-- Use **imperative mood** ("add", not "added" or "adds")
-- Don't end the subject line with a period
-- Reference issues/tickets in the body when applicable
-
-## Pull Request Workflow
-
-### Step-by-Step
-
-1. **Fork** the repository on GitHub
-2. **Create a feature branch** from `main`:
-   ```bash
-   git checkout -b feat/my-feature
-   ```
-3. **Make your changes** following the coding standards
-4. **Commit** using the [commit convention](#commit-convention):
-   ```bash
-   git commit -m "feat: add my new feature"
-   ```
-5. **Run checks** locally:
-   ```bash
-   npm run build
-   npm run lint
-   npm test
-   ```
-6. **Push** to your fork:
-   ```bash
-   git push origin feat/my-feature
-   ```
-7. **Open a Pull Request** against the `main` branch
-   - Use a descriptive title following the commit convention
-   - Include a clear description of what the PR does and why
-   - Reference any related issues or tickets (e.g., `Closes #123`)
-
-### Before Merging
-
-- All CI checks must pass (build, lint, test on three Node.js versions)
-- At least one maintainer review is required
-- The branch must be up to date with `main`
-
-### After Merging
-
-- Delete the feature branch from your fork
-- Celebrate your contribution 🎉
+---
 
 ## Testing
 
-### Test Framework
-
-We use **Vitest** with V8 coverage.
+The project uses [Vitest](https://vitest.dev/) as the test runner.
 
 ### Running Tests
 
@@ -278,44 +216,164 @@ We use **Vitest** with V8 coverage.
 # Run all tests
 npm test
 
-# Watch mode (useful during development)
+# Run tests in watch mode (useful during development)
 npm run test:watch
-
-# Run a specific test file
-npx vitest run src/__tests__/utils/parser.test.ts
 
 # Run tests with coverage report
 npm test -- --coverage
 ```
 
-### Writing Tests
-
-- **New features must include tests**. Bug fixes should include a test that reproduces the bug before the fix.
-- Test files are in `src/__tests__/`, mirroring the source structure under `src/`.
-- Pure utility functions should have **unit tests** with no mocking needed.
-- View tests may require **mocks** for Obsidian APIs (see `src/__tests__/helpers/obsidian-mock.ts`).
-- Follow existing test patterns — each test file has a block comment describing what it tests, and tests are grouped with `describe` blocks.
-- Use `vitest` matchers (`expect`, `toBe`, `toEqual`, `toMatchSnapshot`).
-
 ### Coverage
 
-- Coverage is collected in CI and uploaded to [Codecov](https://codecov.io/gh/tiancaijb/obsidian-gtd).
-- Run locally with `npm test -- --coverage` and open `coverage/index.html` in a browser.
-- Aim to maintain or improve coverage. New code should be covered.
+Coverage reports are generated using `@vitest/coverage-v8`. In CI, the JSON coverage report is uploaded to [Codecov](https://codecov.io/gh/tiancaijb/obsidian-gtd).
 
-## Release Process
+To view the local HTML coverage report:
+```bash
+npm test -- --coverage
+open coverage/index.html
+```
 
-Releases are automated via GitHub Actions. Maintainers follow these steps:
+### Test Requirements
 
-1. Determine the new version following [SemVer](https://semver.org/)
-2. Update `version` in `manifest.json`
-3. Update `versions.json` to map the new version to the minimum app version
-4. Commit with message `chore(release): bump to <version>`
-5. Tag the commit: `git tag <version>` (no leading `v`)
-6. Push the tag: `git push origin <version>`
-7. The [Release workflow](.github/workflows/release.yml) creates a draft release with `main.js`, `manifest.json`, and `styles.css` attached
-8. Publish the draft release on GitHub
+- **New features must include tests** that cover the happy path, edge cases, and error conditions.
+- **Bug fixes must include a regression test** that would have caught the bug.
+- Tests live in `src/__tests__/`, mirroring the module structure of `src/`.
+- Use the Obsidian API mocks in `src/__tests__/helpers/obsidian-mock.ts` instead of mocking the Obsidian API manually.
+- Mocks are reset between tests (`mockReset: true` and `restoreMocks: true` in vitest config) — no need to manually clean up unless you add global mocks.
+- Keep tests fast and focused. They run in a Node.js environment, not a browser.
 
 ---
 
-Thank you for contributing! If you have questions, feel free to open an issue or reach out on Twitter [@tiancaijb666](https://x.com/tiancaijb666).
+## Commit Message Conventions
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/) for commit messages. This makes it easy to generate changelogs and automate version bumps.
+
+### Format
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+[optional footer]
+```
+
+### Types
+
+| Type       | Usage                                                   |
+|------------|---------------------------------------------------------|
+| `feat`     | A new feature                                           |
+| `fix`      | A bug fix                                               |
+| `docs`     | Documentation changes                                   |
+| `style`    | Code style changes (formatting, no logic change)        |
+| `refactor` | Code refactoring with no feature change or bug fix      |
+| `perf`     | Performance improvement                                 |
+| `test`     | Adding or updating tests                                |
+| `chore`    | Build process, CI, dependency updates, tooling          |
+| `ci`       | CI/CD configuration changes                             |
+
+### Scope
+
+The scope should be the module or area affected (e.g., `parser`, `agenda-view`, `timer`, `settings`, `ci`, `docs`). If a change affects multiple scopes, omit the scope.
+
+### Examples
+
+```
+feat(parser): support REPEAT metadata for recurring tasks
+fix(timer): prevent concurrent timer sessions on same task
+docs: add architecture documentation
+refactor(agenda-view): extract task grouping logic into separate module
+test(parser): add test cases for malformed metadata lines
+chore(deps): update esbuild to 0.25.5
+ci: add Codecov coverage upload step
+```
+
+### Footer
+
+Use footnotes for breaking changes (`BREAKING CHANGE:`) or issue references (`Closes #123`).
+
+---
+
+## Pull Request Workflow
+
+### Step-by-Step
+
+1. **Fork** the repository on GitHub.
+
+2. **Create a feature branch** from `main`:
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feat/my-feature
+   ```
+
+3. **Make your changes**. Keep commits small and focused — each commit should represent a logical unit of work.
+
+4. **Run quality checks** locally before committing:
+   ```bash
+   npm run build    # TypeScript type check + esbuild bundle
+   npm run lint     # ESLint — must report zero errors
+   npm test         # All 583+ tests must pass
+   ```
+
+5. **Commit your changes** using the [conventional commit format](#commit-message-conventions):
+   ```bash
+   git add .
+   git commit -m "feat(scope): concise description"
+   ```
+
+6. **Push to your fork**:
+   ```bash
+   git push origin feat/my-feature
+   ```
+
+7. **Open a Pull Request** against `tiancaijb/obsidian-gtd:main`.
+   - Use a clear, descriptive title following the conventional commit format.
+   - In the description, explain what the change does, why it's needed, and how it was tested.
+   - Reference any related issues (e.g., `Closes #123`).
+
+8. **Address review feedback**. The maintainer may request changes. Push additional commits to your branch — avoid force-pushing during review so changes are easy to diff.
+
+9. **Merge**. Once approved, the maintainer will merge your PR. The `main` branch is protected and requires passing CI checks.
+
+### PR Checklist
+
+Before submitting, ensure:
+
+- [ ] `npm run build` passes without errors
+- [ ] `npm run lint` reports zero errors
+- [ ] `npm test` passes (all tests, not just your new ones)
+- [ ] New code includes tests that cover the relevant scenarios
+- [ ] Commit messages follow the conventional commit format
+- [ ] Documentation is updated if the API or behavior changed
+- [ ] No `console.log` or debug artifacts are left in code
+- [ ] The branch is up to date with `main` (rebase if needed)
+
+### Branch Naming
+
+Use descriptive branch names with a type prefix:
+
+- `feat/my-feature` — new features
+- `fix/bug-description` — bug fixes
+- `docs/update-readme` — documentation
+- `refactor/module-name` — refactoring
+- `chore/update-deps` — tooling/dependency updates
+
+---
+
+## Release Process
+
+Releases are managed by the project maintainer. The process is:
+
+1. Bump the `version` field in `manifest.json` following Semantic Versioning (`x.y.z`).
+2. Update `versions.json` to map the new version to the minimum required Obsidian app version.
+3. Run the build to produce the production `main.js`.
+4. Create a GitHub release with a tag matching the version (no leading `v`).
+5. Attach `main.js`, `manifest.json`, and `styles.css` (if present) to the release.
+
+---
+
+## Questions?
+
+If you have questions about contributing, open a [Discussion](https://github.com/tiancaijb/obsidian-gtd/discussions) or reach out to the maintainer on [Twitter](https://x.com/tiancaijb666).
+
+For AI-assisted development, see [`AGENTS.md`](./AGENTS.md) which contains guidelines for AI coding agents working on this project.

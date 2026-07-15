@@ -25,7 +25,7 @@
 
 | 检查项 | 状态 |
 |--------|------|
-| `CONTRIBUTING.md` 存在 | ✅ 321 行，内容完整 |
+| `CONTRIBUTING.md` 存在 | ✅ 373 行，内容完整 |
 | 开发环境搭建 | ✅ 涵盖 Node.js 版本、3 种 dev vault 方案 |
 | 项目结构概览 | ✅ 完整目录树+说明 |
 | 代码规范 | ✅ TypeScript strict、ESLint 双配置、Vitest |
