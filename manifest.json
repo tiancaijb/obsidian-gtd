@@ -1,11 +1,11 @@
 {
 	"id": "gtd-workflow",
 	"name": "GTD Workflow",
-	"version": "0.1.6",
+	"version": "0.2.0",
 	"minAppVersion": "1.13.0",
 	"description": "Org-mode style GTD workflow: TODO/DONE, priorities, scheduled/deadline dates, agenda view, quick capture.",
 	"author": "tiancaijb",
-	"authorUrl": "",
-	"fundingUrl": "",
+	"authorUrl": "https://github.com/tiancaijb",
+	"fundingUrl": "https://afdian.com/a/xx7ax",
 	"isDesktopOnly": false
 }
