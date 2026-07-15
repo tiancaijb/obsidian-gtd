@@ -18,5 +18,8 @@ main.js
 # obsidian
 data.json
 
+# matt-flow auto-develop
+scratch/.last_error
+
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
