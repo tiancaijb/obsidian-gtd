@@ -18,6 +18,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 vi.mock('obsidian', () => import('../helpers/obsidian-mock').then(m => m.obsidianMockModule()));
 
 import { AgendaView, AGENDA_VIEW_TYPE, TimerAPI } from '../../views/agenda-view';
+import { groupTasks } from '../../views/agenda-ui';
 import { MockApp, MockWorkspaceLeaf, MockTFile } from '../helpers/obsidian-mock';
 import { GtdPluginSettings, DEFAULT_SETTINGS } from '../../settings';
 import { resetPomodoro } from '../../utils/pomodoro';
@@ -187,7 +188,6 @@ describe('AgendaView', () => {
 			vi.setSystemTime(new Date('2026-06-28')); // Sunday
 
 			const settings = makeSettings({ lang: 'en', weekStartDay: 1, monthStartDay: 1 });
-			const view = createView(makeApp([]), settings);
 
 			// Create entries with various dates relative to fixed "today" (2026-06-28)
 			const todayEntry = {
@@ -243,9 +243,7 @@ describe('AgendaView', () => {
 
 			const entries = [futureEntry, noDateEntry, todayEntry, thisWeekEntry, thisMonthEntry];
 
-			const groups: { title: string; entries: unknown[] }[] = (
-				view as unknown as { groupTasks(e: unknown[]): { title: string; entries: unknown[] }[] }
-			).groupTasks(entries);
+			const groups = groupTasks(entries, settings);
 
 			// Should produce groups with entries (non-empty groups)
 			expect(groups.length).toBeGreaterThan(0);
@@ -300,7 +298,6 @@ describe('AgendaView', () => {
 			vi.setSystemTime(new Date('2026-06-28'));
 
 			const settings = makeSettings({ lang: 'en', weekStartDay: 1, monthStartDay: 1 });
-			const view = createView(makeApp([]), settings);
 
 			// Create one entry per category
 			const entries = [
@@ -338,9 +335,7 @@ describe('AgendaView', () => {
 				},
 			];
 
-			const groups: { title: string; entries: unknown[] }[] = (
-				view as unknown as { groupTasks(e: unknown[]): { title: string; entries: unknown[] }[] }
-			).groupTasks(entries);
+			const groups = groupTasks(entries, settings);
 
 			// All 5 group slots should be present because each category has entries
 			// (Today entry propagates into Today/ThisWeek/ThisMonth groups)

@@ -1,5 +1,5 @@
 import { Notice, Plugin } from 'obsidian';
-import { AgendaView, AGENDA_VIEW_TYPE } from '../views/agenda-view';
+import { AGENDA_VIEW_TYPE } from '../views/agenda-types';
 import { appendClockLog } from './file-ops';
 import { Lang } from './i18n';
 
@@ -297,8 +297,8 @@ export function setupPomodoroCallbacks(
 			const leaves =
 				plugin.app.workspace.getLeavesOfType(AGENDA_VIEW_TYPE);
 			const leaf = leaves[0];
-			if (leaf?.view instanceof AgendaView) {
-				leaf.view.refreshPomodoro();
+			if (leaf?.view && 'refreshPomodoro' in leaf.view) {
+				(leaf.view as { refreshPomodoro: () => void }).refreshPomodoro();
 			}
 		},
 		(phase: PomodoroPhase, ps: PomodoroState) => {
