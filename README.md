@@ -5,6 +5,7 @@
 [中文](./README.zh-CN.md) · [日本語](./README.ja.md)
 
 [![爱发电赞助](afdian-sponsor.jpg)](https://afdian.com/a/xx7ax)
+[![Follow @tiancaijb666 on Twitter](https://img.shields.io/badge/follow-%40tiancaijb666-1DA1F2?logo=twitter&style=social)](https://x.com/tiancaijb666)
 
 ---
 

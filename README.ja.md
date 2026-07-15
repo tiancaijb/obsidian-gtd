@@ -4,6 +4,8 @@
 
 [English](./README.md) · [中文](./README.zh-CN.md)
 
+[![Follow @tiancaijb666 on Twitter](https://img.shields.io/badge/follow-%40tiancaijb666-1DA1F2?logo=twitter&style=social)](https://x.com/tiancaijb666)
+
 ---
 
 ## これは何？
