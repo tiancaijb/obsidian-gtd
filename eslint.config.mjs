@@ -4,7 +4,7 @@ import vitest from '@vitest/eslint-plugin';
 import globals from 'globals';
 
 export default tseslint.config(
-	{ ignores: ['main.js', '*.js', 'node_modules', '.hotreload', 'version-bump.mjs', 'esbuild.config.mjs', 'eslint.config.mjs'] },
+	{ ignores: ['main.js', '*.js', 'node_modules', '.hotreload', 'version-bump.mjs', 'esbuild.config.mjs', 'eslint.config.mjs', 'coverage'] },
 
 	// Strict type-checked rules for plugin source code (not tests)
 	{

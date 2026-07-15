@@ -14,6 +14,15 @@ export default defineConfig({
 		esbuild: {
 			target: 'es2021',
 		},
+		// Code coverage configuration
+		// Coverage report is uploaded to Codecov in CI (see .github/workflows/lint.yml)
+		coverage: {
+			provider: 'v8',
+			reporter: ['text', 'json', 'html'],
+			reportsDirectory: './coverage',
+			include: ['src/**/*.ts'],
+			exclude: ['src/__tests__/**', '**/*.test.ts'],
+		},
 	},
 	resolve: {
 		alias: {

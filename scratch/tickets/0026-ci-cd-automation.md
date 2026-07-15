@@ -10,18 +10,18 @@
 - README 中的质量状态标识
 
 ## 任务清单
-- [ ] 创建 `.github/dependabot.yml`
+- [x] 创建 `.github/dependabot.yml`
   - 每周一检查 npm 依赖更新
   - 最多 10 个 open PR
-- [ ] 在 `lint.yml` 中添加 coverage 步骤
+- [x] 在 `lint.yml` 中添加 coverage 步骤
   - `npx vitest --coverage` 生成覆盖率报告
   - 使用 `codecov/codecov-action@v5` 上传
   - 安装 `@vitest/coverage-v8` 作为 devDependency
-- [ ] 在 README.md 顶部添加徽标行
+- [x] 在 README.md 顶部添加徽标行
   - GitHub Actions (build) badge
   - Codecov badge
   - 格式参考 shields.io 标准 badge URL
-- [ ] 确认 `npm run build + lint + test` 通过
+- [x] 确认 `npm run build + lint + test` 通过
 
 ## 产出标准
 - `.github/dependabot.yml` 存在且配置正确
