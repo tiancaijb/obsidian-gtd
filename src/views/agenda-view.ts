@@ -4,6 +4,7 @@ import { ParsedTask, Priority } from '../models/task';
 import { isToday, isThisWeek, isThisMonth } from '../utils/date-utils';
 import { GtdPluginSettings } from '../settings';
 import { t, groupTitles } from '../utils/i18n';
+import { FileCache } from '../utils/file-cache';
 import {
 	getPomodoroState, startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro,
 } from '../utils/pomodoro';
@@ -32,11 +33,14 @@ interface TaskEntry {
 export class AgendaView extends ItemView {
 	private settings: GtdPluginSettings;
 	private timerAPI: TimerAPI;
+	private fileCache: FileCache | null;
+	private refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
-	constructor(leaf: WorkspaceLeaf, settings: GtdPluginSettings, timerAPI: TimerAPI) {
+	constructor(leaf: WorkspaceLeaf, settings: GtdPluginSettings, timerAPI: TimerAPI, fileCache?: FileCache) {
 		super(leaf);
 		this.settings = settings;
 		this.timerAPI = timerAPI;
+		this.fileCache = fileCache ?? null;
 	}
 
 	getViewType(): string {
@@ -64,6 +68,22 @@ export class AgendaView extends ItemView {
 	private pomodoroEl: HTMLElement | null = null;
 
 	async refresh() {
+		// Debounce: coalesce rapid successive refresh() calls
+		if (this.refreshTimer) {
+			clearTimeout(this.refreshTimer);
+		}
+		return new Promise<void>((resolve) => {
+			this.refreshTimer = setTimeout(() => {
+				this.refreshTimer = null;
+				void (async () => {
+					await this.doFullRefresh();
+					resolve();
+				})();
+			}, 300);
+		});
+	}
+
+	private async doFullRefresh() {
 		const el = this.contentEl;
 		el.empty();
 		el.addClass('gtd-agenda');
@@ -251,8 +271,19 @@ export class AgendaView extends ItemView {
 		const gtdPrefix = this.settings.gtdFolder + '/';
 		const files = allFiles.filter((f) => f.path.startsWith(gtdPrefix));
 
+		// Update file cache prefix if the cache exists
+		if (this.fileCache) {
+			this.fileCache.setGtdPrefix(gtdPrefix);
+			// If cache was dirty (file changes detected), mark it clean now
+			if (this.fileCache.isDirty()) {
+				this.fileCache.markClean();
+			}
+		}
+
 		for (const file of files) {
-			const content = await this.app.vault.read(file);
+			const content = this.fileCache
+				? await this.fileCache.getOrRead(file, this.app.vault)
+				: await this.app.vault.read(file);
 			const lines = content.split('\n');
 
 			for (let i = 0; i < lines.length; i++) {

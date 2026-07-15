@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
 import { t, Lang } from '../utils/i18n';
 import { todayStr, formatDate } from '../utils/date-utils';
 import { parseTaskLines } from '../utils/parser';
+import { FileCache } from '../utils/file-cache';
 import { ClockRecord, extractClockRecords, filterByDate, formatDuration as fmtClock } from '../utils/clock-parser';
 
 export const TIMELINE_VIEW_TYPE = 'gtd-timeline';
@@ -29,11 +30,13 @@ function hashColor(key: string): string {
 export class TimelineView extends ItemView {
 	private lang: Lang;
 	private dateStr: string;
+	private fileCache: FileCache | null;
 
-	constructor(leaf: WorkspaceLeaf, lang: Lang) {
+	constructor(leaf: WorkspaceLeaf, lang: Lang, fileCache?: FileCache) {
 		super(leaf);
 		this.lang = lang;
 		this.dateStr = todayStr();
+		this.fileCache = fileCache ?? null;
 	}
 
 	getViewType(): string { return TIMELINE_VIEW_TYPE; }
@@ -84,7 +87,9 @@ export class TimelineView extends ItemView {
 		// ── Scan files with heading hierarchy ──
 		const entries: ClockWithTask[] = [];
 		for (const file of this.app.vault.getMarkdownFiles()) {
-			const content = await this.app.vault.read(file);
+			const content = this.fileCache
+				? await this.fileCache.getOrRead(file, this.app.vault)
+				: await this.app.vault.read(file);
 			const lines = content.split('\n');
 
 			// Track heading stack for parent context
@@ -119,6 +124,10 @@ export class TimelineView extends ItemView {
 					i++;
 				}
 			}
+		}
+
+		if (this.fileCache) {
+			this.fileCache.markClean();
 		}
 
 		this.renderTimeline(container, entries);

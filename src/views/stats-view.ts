@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownView } from 'obsidian';
 import { t, Lang } from '../utils/i18n';
 import { parseTaskLines } from '../utils/parser';
+import { FileCache } from '../utils/file-cache';
 import { ClockRecord, extractClockRecords, formatDuration as fmtClock } from '../utils/clock-parser';
 import { formatDate, getWeekStart, getMonthPeriodStart } from '../utils/date-utils';
 
@@ -33,10 +34,12 @@ function hashColor(key: string): string {
 export class StatsView extends ItemView {
 	private lang: Lang;
 	private period: PeriodKey = 'today';
+	private fileCache: FileCache | null;
 
-	constructor(leaf: WorkspaceLeaf, lang: Lang) {
+	constructor(leaf: WorkspaceLeaf, lang: Lang, fileCache?: FileCache) {
 		super(leaf);
 		this.lang = lang;
+		this.fileCache = fileCache ?? null;
 	}
 
 	getViewType(): string { return STATS_VIEW_TYPE; }
@@ -162,7 +165,9 @@ export class StatsView extends ItemView {
 		const taskMap = new Map<string, TaskStat>();
 
 		for (const file of this.app.vault.getMarkdownFiles()) {
-			const content = await this.app.vault.read(file);
+			const content = this.fileCache
+				? await this.fileCache.getOrRead(file, this.app.vault)
+				: await this.app.vault.read(file);
 			const lines = content.split('\n');
 
 			let i = 0;
@@ -199,6 +204,10 @@ export class StatsView extends ItemView {
 					i++;
 				}
 			}
+		}
+
+		if (this.fileCache) {
+			this.fileCache.markClean();
 		}
 
 		this.renderStats(container, taskMap);
