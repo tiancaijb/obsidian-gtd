@@ -110,7 +110,7 @@ export class GtdSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.lang)
 					.onChange((v) => {
 						this.plugin.settings.lang = v as 'zh' | 'en';
-						this.plugin.saveData(this.plugin.settings);
+						void this.plugin.saveData(this.plugin.settings);
 						this.renderSettings();
 					}),
 			);

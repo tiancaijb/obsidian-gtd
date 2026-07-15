@@ -201,13 +201,13 @@ export class AgendaUI {
 			if (existing.length > 0) {
 				const existingLeaf = existing[0];
 				if (existingLeaf) {
-					this.ctx.app.workspace.revealLeaf(existingLeaf);
+					void this.ctx.app.workspace.revealLeaf(existingLeaf);
 				}
 			} else {
 				const leaf = this.ctx.app.workspace.getRightLeaf(false);
 				if (leaf) {
 					void leaf.setViewState({ type });
-					this.ctx.app.workspace.revealLeaf(leaf);
+					void this.ctx.app.workspace.revealLeaf(leaf);
 				}
 			}
 		};

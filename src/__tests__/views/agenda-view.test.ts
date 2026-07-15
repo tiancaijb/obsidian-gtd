@@ -17,6 +17,9 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 vi.mock('obsidian', () => import('../helpers/obsidian-mock').then(m => m.obsidianMockModule()));
 
+// window.setTimeout used in agenda-view.ts for debouncing
+vi.stubGlobal('window', { setTimeout: globalThis.setTimeout.bind(globalThis) });
+
 import { AgendaView, AGENDA_VIEW_TYPE, TimerAPI } from '../../views/agenda-view';
 import { groupTasks } from '../../views/agenda-ui';
 import { MockApp, MockWorkspaceLeaf, MockTFile } from '../helpers/obsidian-mock';

@@ -23,7 +23,7 @@ export class AgendaView extends ItemView {
 	private settings: GtdPluginSettings;
 	private timerAPI: TimerAPI;
 	private fileCache: FileCache | null;
-	private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+	private refreshTimer: number | null = null;
 	private ui: AgendaUI;
 
 	constructor(leaf: WorkspaceLeaf, settings: GtdPluginSettings, timerAPI: TimerAPI, fileCache?: FileCache) {
@@ -71,10 +71,10 @@ export class AgendaView extends ItemView {
 	async refresh() {
 		// Debounce: coalesce rapid successive refresh() calls
 		if (this.refreshTimer) {
-			clearTimeout(this.refreshTimer);
+			window.clearTimeout(this.refreshTimer);
 		}
 		return new Promise<void>((resolve) => {
-			this.refreshTimer = setTimeout(() => {
+			this.refreshTimer = window.setTimeout(() => {
 				this.refreshTimer = null;
 				void (async () => {
 					await this.doFullRefresh();

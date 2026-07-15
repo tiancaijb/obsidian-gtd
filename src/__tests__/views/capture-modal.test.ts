@@ -146,12 +146,10 @@ describe('CaptureModal', () => {
 				(c) => c.tagName === 'button' && c._classList.has('gtd-prio-btn')
 					&& c._attributes.get('data-value') === 'A');
 			expect(prioBtnA).toBeDefined();
-
-			if (prioBtnA) {
-				const clickHandler = prioBtnA._listeners.get('click');
-				expect(clickHandler).toBeDefined();
-				clickHandler!(mouseEvent);
-			}
+			// Already asserted above, so safe to access
+			const clickHandler = prioBtnA!._listeners.get('click');
+			expect(clickHandler).toBeDefined();
+			clickHandler!(mouseEvent);
 
 			// Set task text and submit
 			const input = findFirst(modal.contentEl,

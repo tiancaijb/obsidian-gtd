@@ -1,6 +1,6 @@
 import obsidian from 'eslint-plugin-obsidianmd';
 import tseslint from 'typescript-eslint';
-import vitest from 'eslint-plugin-vitest';
+import vitest from '@vitest/eslint-plugin';
 import globals from 'globals';
 
 export default tseslint.config(
