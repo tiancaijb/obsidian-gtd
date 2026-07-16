@@ -74,6 +74,11 @@ export class AgendaView extends ItemView {
 		await this.refresh();
 	}
 
+	/** Clean up pending deferred render tasks when the view is closed. */
+	onunload(): void {
+		this.getUI().cancelPendingRender();
+	}
+
 	updateSettings(settings: GtdPluginSettings) {
 		this.settings = settings;
 		// Recreate UI with updated settings

@@ -21,7 +21,7 @@ import { t, groupTitles, Lang } from '../utils/i18n';
 import {
 	getPomodoroState, startPomodoro, pausePomodoro, resumePomodoro, stopPomodoro,
 } from '../utils/pomodoro';
-import { TimerAPI, TaskEntry } from './agenda-types';
+import { TimerAPI, TaskEntry, GroupTier } from './agenda-types';
 import { TIMELINE_VIEW_TYPE } from './timeline-view';
 import { STATS_VIEW_TYPE } from './stats-view';
 
@@ -32,6 +32,7 @@ import { STATS_VIEW_TYPE } from './stats-view';
 export interface Group {
 	title: string;
 	entries: TaskEntry[];
+	tier: GroupTier;
 }
 
 /**
@@ -43,11 +44,11 @@ export function groupTasks(
 	settings: { weekStartDay: number; monthStartDay: number; lang: Lang },
 ): Group[] {
 	const titles = groupTitles(settings.lang);
-	const todayGroup: Group = { title: titles[0] ?? '', entries: [] };
-	const thisWeekGroup: Group = { title: titles[1] ?? '', entries: [] };
-	const thisMonthGroup: Group = { title: titles[2] ?? '', entries: [] };
-	const futureGroup: Group = { title: titles[3] ?? '', entries: [] };
-	const noDateGroup: Group = { title: titles[4] ?? '', entries: [] };
+	const todayGroup: Group = { title: titles[0] ?? '', entries: [], tier: 'today' };
+	const thisWeekGroup: Group = { title: titles[1] ?? '', entries: [], tier: 'thisWeek' };
+	const thisMonthGroup: Group = { title: titles[2] ?? '', entries: [], tier: 'thisMonth' };
+	const futureGroup: Group = { title: titles[3] ?? '', entries: [], tier: 'future' };
+	const noDateGroup: Group = { title: titles[4] ?? '', entries: [], tier: 'noDate' };
 
 	const { weekStartDay, monthStartDay } = settings;
 
@@ -106,6 +107,28 @@ export interface AgendaUIContext {
 export class AgendaUI {
 	timerBarEl: HTMLElement | null = null;
 	pomodoroEl: HTMLElement | null = null;
+
+	/** Tracks pending requestAnimationFrame handles for deferred group rendering. */
+	private pendingFrames: number[] = [];
+
+	/** Tracks pending setTimeout handles for deferred group rendering. */
+	private pendingTimers: number[] = [];
+
+	/** Cancel all pending deferred render tasks. Called on view unload or before a new refresh. */
+	cancelPendingRender(): void {
+		for (const id of this.pendingFrames) {
+			if (typeof cancelAnimationFrame !== 'undefined') {
+				cancelAnimationFrame(id);
+			} else {
+				window.clearTimeout(id);
+			}
+		}
+		for (const id of this.pendingTimers) {
+			window.clearTimeout(id);
+		}
+		this.pendingFrames = [];
+		this.pendingTimers = [];
+	}
 
 	constructor(private ctx: AgendaUIContext) {}
 
@@ -280,7 +303,143 @@ export class AgendaUI {
 
 	// ── Render task groups ───────────────────────────────────────────────
 
+	/** Render a single group's header and task list into the container. */
+	private renderSingleGroup(container: HTMLElement, group: Group): void {
+		const header = container.createEl('div', { cls: 'gtd-group-header' });
+		header.createEl('span', { cls: 'gtd-group-title', text: `${group.title} (${group.entries.length})` });
+
+		const list = container.createEl('div', { cls: 'gtd-task-list' });
+
+		const sorted = sortEntries(group.entries);
+
+		for (const entry of sorted) {
+			const item = list.createEl('div', { cls: 'gtd-task-item' });
+
+			// Indent subtasks
+			const indentPx = entry.task.indent * 16;
+			if (indentPx > 0) item.style.paddingLeft = `${indentPx}px`;
+
+			// Click anywhere on the item to navigate (except checkbox)
+			item.addEventListener('click', (e) => {
+				if ((e.target as HTMLElement).tagName === 'INPUT') return; // checkbox click
+				void this.ctx.navigateToTask(entry);
+			});
+
+			// Row: checkbox + priority + text + file
+			const row = item.createDiv({ cls: 'gtd-task-row' });
+
+			// Checkbox
+			const chk = row.createEl('input', {
+				cls: 'gtd-task-checkbox',
+				attr: { type: 'checkbox' },
+			});
+			chk.checked = entry.task.checked;
+			chk.addEventListener('change', () => {
+				void (async () => {
+					const fileContent = await this.ctx.app.vault.read(entry.file);
+					const fileLines = fileContent.split('\n');
+					const task = parseTaskLines(fileLines, entry.task.line);
+					if (task) {
+						task.checked = chk.checked;
+						task.closed = chk.checked
+							? new Date().toISOString().slice(0, 10)
+							: null;
+						const serialized = serializeTask(task, this.ctx.settings.lang);
+						const serLines = serialized.split('\n');
+						const end = entry.task.line + task.metaLineCount;
+						fileLines.splice(entry.task.line, end - entry.task.line + 1, ...serLines);
+						void this.ctx.app.vault.modify(entry.file, fileLines.join('\n'));
+					}
+					void this.ctx.refresh();
+				})();
+			});
+
+			// Timer button
+			const timerBtn = row.createEl('span', {
+				cls: 'gtd-timer-btn',
+				text: '▶',
+			});
+			const currentTimer = this.ctx.timerAPI.getCurrent();
+			const isThisTaskTimed = currentTimer && currentTimer.filePath === entry.file.path && currentTimer.line === entry.task.line;
+			if (isThisTaskTimed) {
+				timerBtn.setText(currentTimer.running ? '⏸' : '▶');
+				timerBtn.addClass('gtd-timer-active');
+			}
+			timerBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const cur = this.ctx.timerAPI.getCurrent();
+				if (cur && cur.filePath === entry.file.path && cur.line === entry.task.line) {
+					// Same task: stop and log
+					this.ctx.timerAPI.stopAndLog(entry.file.path, entry.task.line);
+					timerBtn.setText('▶');
+					timerBtn.removeClass('gtd-timer-active');
+					void this.ctx.refresh();
+				} else {
+					// Different task: stop old (with log), start new
+					const oldCur = this.ctx.timerAPI.getCurrent();
+					if (oldCur) {
+						this.ctx.timerAPI.stopAndLog(oldCur.filePath, oldCur.line);
+					}
+					this.ctx.timerAPI.start(entry.file.path, entry.task.line);
+					timerBtn.setText('⏸');
+					timerBtn.addClass('gtd-timer-active');
+					this.refreshTimerOnly();
+				}
+			});
+
+			// Pomodoro button
+			const pomoBtn = row.createEl('span', {
+				cls: 'gtd-pomo-btn',
+				text: t('pomoLabel', this.ctx.settings.lang),
+			});
+			const ps = getPomodoroState();
+			const isThisPomo = ps.phase !== 'idle' && ps.taskFilePath === entry.file.path && ps.taskLine === entry.task.line;
+			if (isThisPomo) pomoBtn.addClass('gtd-pomo-btn-active');
+
+			pomoBtn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const curPomo = getPomodoroState();
+				if (curPomo.phase !== 'idle' && curPomo.taskFilePath === entry.file.path && curPomo.taskLine === entry.task.line) {
+					// Toggle pause/resume on this pomodoro
+					if (curPomo.paused) {
+						resumePomodoro();
+					} else if (curPomo.phase === 'focus') {
+						pausePomodoro();
+					}
+					void this.ctx.refresh();
+					return;
+				}
+				// Start fresh pomodoro for this task
+				// Stop any running timer first
+				const curTimer = this.ctx.timerAPI.getCurrent();
+				if (curTimer) {
+					this.ctx.timerAPI.stopAndLog(curTimer.filePath, curTimer.line);
+				}
+				startPomodoro(entry.file.path, entry.task.line);
+				void this.ctx.refresh();
+			});
+
+			// Priority badge (no #)
+			if (entry.task.priority) {
+				row.createEl('span', {
+					cls: `gtd-priority gtd-priority-${entry.task.priority.toLowerCase()}`,
+					text: entry.task.priority,
+				});
+			}
+
+			// Task text
+			const textEl = row.createEl('span', { cls: 'gtd-task-text', text: entry.task.text });
+			if (entry.task.checked) textEl.addClass('gtd-done');
+
+			// File link
+			row.createEl('a', { cls: 'gtd-file-link', text: entry.file.basename });
+		}
+	}
+
 	renderGroups(el: HTMLElement, groups: Group[]): void {
+		// Cancel any pending renders from a previous refresh
+		this.cancelPendingRender();
+
 		const lang = this.ctx.settings.lang;
 		if (groups.length === 0) {
 			el.createEl('div', { text: `${t('noTasks', lang)}. ${t('captureHint', lang)}`, cls: 'gtd-empty' });
@@ -288,134 +447,24 @@ export class AgendaUI {
 		}
 
 		for (const group of groups) {
-			const header = el.createEl('div', { cls: 'gtd-group-header' });
-			header.createEl('span', { cls: 'gtd-group-title', text: `${group.title} (${group.entries.length})` });
-
-			const list = el.createEl('div', { cls: 'gtd-task-list' });
-
-			const sorted = sortEntries(group.entries);
-
-			for (const entry of sorted) {
-				const item = list.createEl('div', { cls: 'gtd-task-item' });
-
-				// Indent subtasks
-				const indentPx = entry.task.indent * 16;
-				if (indentPx > 0) item.style.paddingLeft = `${indentPx}px`;
-
-				// Click anywhere on the item to navigate (except checkbox)
-				item.addEventListener('click', (e) => {
-					if ((e.target as HTMLElement).tagName === 'INPUT') return; // checkbox click
-					void this.ctx.navigateToTask(entry);
+			if (group.tier === 'today' || group.tier === 'thisWeek') {
+				// High priority: render immediately
+				this.renderSingleGroup(el, group);
+			} else if (group.tier === 'thisMonth') {
+				// Medium priority: micro-delay via requestAnimationFrame (or setTimeout(0) in test/Node)
+				const raf = typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame : (cb: () => void) => window.setTimeout(cb, 0);
+				const id = raf(() => {
+					this.renderSingleGroup(el, group);
+					this.pendingFrames = this.pendingFrames.filter((fid) => fid !== id);
 				});
-
-				// Row: checkbox + priority + text + file
-				const row = item.createDiv({ cls: 'gtd-task-row' });
-
-				// Checkbox
-				const chk = row.createEl('input', {
-					cls: 'gtd-task-checkbox',
-					attr: { type: 'checkbox' },
-				});
-				chk.checked = entry.task.checked;
-				chk.addEventListener('change', () => {
-					void (async () => {
-						const fileContent = await this.ctx.app.vault.read(entry.file);
-						const fileLines = fileContent.split('\n');
-						const task = parseTaskLines(fileLines, entry.task.line);
-						if (task) {
-							task.checked = chk.checked;
-							task.closed = chk.checked
-								? new Date().toISOString().slice(0, 10)
-								: null;
-							const serialized = serializeTask(task, this.ctx.settings.lang);
-							const serLines = serialized.split('\n');
-							const end = entry.task.line + task.metaLineCount;
-							fileLines.splice(entry.task.line, end - entry.task.line + 1, ...serLines);
-							void this.ctx.app.vault.modify(entry.file, fileLines.join('\n'));
-						}
-						void this.ctx.refresh();
-					})();
-				});
-
-				// Timer button
-				const timerBtn = row.createEl('span', {
-					cls: 'gtd-timer-btn',
-					text: '▶',
-				});
-				const currentTimer = this.ctx.timerAPI.getCurrent();
-				const isThisTaskTimed = currentTimer && currentTimer.filePath === entry.file.path && currentTimer.line === entry.task.line;
-				if (isThisTaskTimed) {
-					timerBtn.setText(currentTimer.running ? '⏸' : '▶');
-					timerBtn.addClass('gtd-timer-active');
-				}
-				timerBtn.addEventListener('click', (e) => {
-					e.stopPropagation();
-					const cur = this.ctx.timerAPI.getCurrent();
-					if (cur && cur.filePath === entry.file.path && cur.line === entry.task.line) {
-						// Same task: stop and log
-						this.ctx.timerAPI.stopAndLog(entry.file.path, entry.task.line);
-						timerBtn.setText('▶');
-						timerBtn.removeClass('gtd-timer-active');
-						void this.ctx.refresh();
-					} else {
-						// Different task: stop old (with log), start new
-						const oldCur = this.ctx.timerAPI.getCurrent();
-						if (oldCur) {
-							this.ctx.timerAPI.stopAndLog(oldCur.filePath, oldCur.line);
-						}
-						this.ctx.timerAPI.start(entry.file.path, entry.task.line);
-						timerBtn.setText('⏸');
-						timerBtn.addClass('gtd-timer-active');
-						this.refreshTimerOnly();
-					}
-				});
-
-				// Pomodoro button
-				const pomoBtn = row.createEl('span', {
-					cls: 'gtd-pomo-btn',
-					text: t('pomoLabel', this.ctx.settings.lang),
-				});
-				const ps = getPomodoroState();
-				const isThisPomo = ps.phase !== 'idle' && ps.taskFilePath === entry.file.path && ps.taskLine === entry.task.line;
-				if (isThisPomo) pomoBtn.addClass('gtd-pomo-btn-active');
-
-				pomoBtn.addEventListener('click', (e) => {
-					e.stopPropagation();
-					const curPomo = getPomodoroState();
-					if (curPomo.phase !== 'idle' && curPomo.taskFilePath === entry.file.path && curPomo.taskLine === entry.task.line) {
-						// Toggle pause/resume on this pomodoro
-						if (curPomo.paused) {
-							resumePomodoro();
-						} else if (curPomo.phase === 'focus') {
-							pausePomodoro();
-						}
-						void this.ctx.refresh();
-						return;
-					}
-					// Start fresh pomodoro for this task
-					// Stop any running timer first
-					const curTimer = this.ctx.timerAPI.getCurrent();
-					if (curTimer) {
-						this.ctx.timerAPI.stopAndLog(curTimer.filePath, curTimer.line);
-					}
-					startPomodoro(entry.file.path, entry.task.line);
-					void this.ctx.refresh();
-				});
-
-				// Priority badge (no #)
-				if (entry.task.priority) {
-					row.createEl('span', {
-						cls: `gtd-priority gtd-priority-${entry.task.priority.toLowerCase()}`,
-						text: entry.task.priority,
-					});
-				}
-
-				// Task text
-				const textEl = row.createEl('span', { cls: 'gtd-task-text', text: entry.task.text });
-				if (entry.task.checked) textEl.addClass('gtd-done');
-
-				// File link
-				row.createEl('a', { cls: 'gtd-file-link', text: entry.file.basename });
+				this.pendingFrames.push(id);
+			} else {
+				// Low priority (future, noDate): delay 500ms
+				const id = window.setTimeout(() => {
+					this.renderSingleGroup(el, group);
+					this.pendingTimers = this.pendingTimers.filter((tid) => tid !== id);
+				}, 500);
+				this.pendingTimers.push(id);
 			}
 		}
 	}

@@ -13,6 +13,9 @@ export interface TimerAPI {
 	stopAndLog: (path: string, line: number) => void;
 }
 
+/** Group tier for lazy rendering priority. */
+export type GroupTier = 'today' | 'thisWeek' | 'thisMonth' | 'future' | 'noDate';
+
 export interface TaskEntry {
 	task: ParsedTask;
 	file: TFile;

@@ -119,6 +119,10 @@ export class MockItemView {
 	async onClose(): Promise<void> {
 		// no-op
 	}
+
+	onunload(): void {
+		// no-op
+	}
 }
 
 // ─── Vault ────────────────────────────────────────────────────────────────
