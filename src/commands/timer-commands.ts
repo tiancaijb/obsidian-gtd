@@ -18,8 +18,6 @@ import { TimerAPI } from '../views/agenda-view';
 /**
  * Toggle timer on a task: start if none running, stop+log if same task,
  * or switch to new task (logging the old one if long enough).
- *
- * Extracted from the original OrgGtdPlugin.toggleTimer() method.
  */
 function toggleTimer(
 	plugin: OrgGtdPlugin,
@@ -70,6 +68,51 @@ function toggleTimer(
 	new Notice(t('timerStarted', plugin.settings.lang));
 }
 
+// ── Lazy callback implementations ───────────────────────────────────────
+
+function toggleTimerOnCurrentTask(plugin: OrgGtdPlugin): void {
+	const view =
+		plugin.app.workspace.getActiveViewOfType(MarkdownView);
+	if (!view) {
+		new Notice('No active editor');
+		return;
+	}
+	const cursor = view.editor.getCursor();
+	const text = view.editor.getLine(cursor.line);
+	if (!isTaskLine(text)) {
+		new Notice('Not a task');
+		return;
+	}
+
+	const file = view.file;
+	if (!file) {
+		new Notice('No file');
+		return;
+	}
+
+	toggleTimer(plugin, file.path, cursor.line);
+}
+
+function startPomodoroFocus(plugin: OrgGtdPlugin): void {
+	const view =
+		plugin.app.workspace.getActiveViewOfType(MarkdownView);
+	const file = view?.file;
+	const cursor = view?.editor.getCursor();
+	const line = cursor?.line;
+	const text = line !== undefined ? view?.editor.getLine(line) : '';
+	const isTask = text ? isTaskLine(text) : false;
+	startPomodoro(isTask ? file?.path : null, isTask ? line : null);
+	new Notice('🍅 Pomodoro started!');
+}
+
+function stopPomodoroFocus(): void {
+	const result = stopPomodoro();
+	if (result) new Notice('🍅 Pomodoro stopped');
+	else new Notice('No active pomodoro');
+}
+
+// ── TimerAPI factory ────────────────────────────────────────────────────
+
 /**
  * Create the TimerAPI object used by AgendaView to control the timer.
  */
@@ -110,58 +153,25 @@ export function createTimerAPI(plugin: OrgGtdPlugin): TimerAPI {
  *  - gtd-toggle-timer
  *  - gtd-pomodoro-start
  *  - gtd-pomodoro-stop
+ *
+ * Each callback is a standalone function for lazy execution.
  */
 export function registerTimerCommands(plugin: OrgGtdPlugin): void {
 	plugin.addCommand({
 		id: 'gtd-toggle-timer',
 		name: 'Toggle timer on current task',
-		callback: () => {
-			const view =
-				plugin.app.workspace.getActiveViewOfType(MarkdownView);
-			if (!view) {
-				new Notice('No active editor');
-				return;
-			}
-			const cursor = view.editor.getCursor();
-			const text = view.editor.getLine(cursor.line);
-			if (!isTaskLine(text)) {
-				new Notice('Not a task');
-				return;
-			}
-
-			const file = view.file;
-			if (!file) {
-				new Notice('No file');
-				return;
-			}
-
-			toggleTimer(plugin, file.path, cursor.line);
-		},
+		callback: () => { toggleTimerOnCurrentTask(plugin); },
 	});
 
 	plugin.addCommand({
 		id: 'gtd-pomodoro-start',
 		name: 'Start pomodoro (focus)',
-		callback: () => {
-			const view =
-				plugin.app.workspace.getActiveViewOfType(MarkdownView);
-			const file = view?.file;
-			const cursor = view?.editor.getCursor();
-			const line = cursor?.line;
-			const text = line !== undefined ? view?.editor.getLine(line) : '';
-			const isTask = text ? isTaskLine(text) : false;
-			startPomodoro(isTask ? file?.path : null, isTask ? line : null);
-			new Notice('🍅 Pomodoro started!');
-		},
+		callback: () => { startPomodoroFocus(plugin); },
 	});
 
 	plugin.addCommand({
 		id: 'gtd-pomodoro-stop',
 		name: 'Stop pomodoro',
-		callback: () => {
-			const result = stopPomodoro();
-			if (result) new Notice('🍅 Pomodoro stopped');
-			else new Notice('No active pomodoro');
-		},
+		callback: () => { stopPomodoroFocus(); },
 	});
 }

@@ -24,14 +24,14 @@ export class AgendaView extends ItemView {
 	private timerAPI: TimerAPI;
 	private fileCache: FileCache | null;
 	private refreshTimer: number | null = null;
-	private ui: AgendaUI;
+	private ui: AgendaUI | null = null;
 
 	constructor(leaf: WorkspaceLeaf, settings: GtdPluginSettings, timerAPI: TimerAPI, fileCache?: FileCache) {
 		super(leaf);
 		this.settings = settings;
 		this.timerAPI = timerAPI;
 		this.fileCache = fileCache ?? null;
-		this.ui = this.createUI();
+		// UI is created lazily in onOpen() — no heavy work in constructor
 	}
 
 	/** Factory method — constructs AgendaUI with the view's dependencies. */
@@ -43,6 +43,14 @@ export class AgendaView extends ItemView {
 			refresh: () => this.refresh(),
 			navigateToTask: (entry) => this.navigateToTask(entry),
 		});
+	}
+
+	/** Lazy getter: creates UI on first access (after onOpen). */
+	private getUI(): AgendaUI {
+		if (!this.ui) {
+			this.ui = this.createUI();
+		}
+		return this.ui;
 	}
 
 	getViewType(): string {
@@ -58,6 +66,8 @@ export class AgendaView extends ItemView {
 	}
 
 	async onOpen() {
+		// Ensure UI is created before first refresh
+		this.getUI();
 		await this.refresh();
 	}
 
@@ -90,23 +100,24 @@ export class AgendaView extends ItemView {
 		el.empty();
 		el.addClass('gtd-agenda');
 
-		this.ui.buildCaptureBar(el);
-		this.ui.buildNavBar(el);
-		this.ui.buildPomodoroSection(el);
-		this.ui.buildTimerBar(el);
+		const ui = this.getUI();
+		ui.buildCaptureBar(el);
+		ui.buildNavBar(el);
+		ui.buildPomodoroSection(el);
+		ui.buildTimerBar(el);
 		const tasks = await this.scanVault();
 		const grouped = groupTasks(tasks, this.settings);
-		this.ui.renderGroups(el, grouped);
+		ui.renderGroups(el, grouped);
 	}
 
 	/** Refresh the pomodoro section UI (called externally by pomodoro tick). */
 	refreshPomodoro(): void {
-		this.ui.refreshPomodoro();
+		this.getUI().refreshPomodoro();
 	}
 
 	/** Refresh the timer bar UI (called externally by timer tick). */
 	refreshTimerOnly(): void {
-		this.ui.refreshTimerOnly();
+		this.getUI().refreshTimerOnly();
 	}
 
 	// ── Vault scanning ───────────────────────────────────────────────────
