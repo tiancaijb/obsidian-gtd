@@ -1,8 +1,9 @@
 import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
 import { t, Lang } from '../utils/i18n';
 import { todayStr, formatDate } from '../utils/date-utils';
-import { parseTaskLines } from '../utils/parser';
+import { parseFileTasks } from '../utils/parser';
 import { FileCache } from '../utils/file-cache';
+import { ParserCache } from '../utils/parser-cache';
 import { ClockRecord, extractClockRecords, filterByDate, formatDuration as fmtClock } from '../utils/clock-parser';
 
 export const TIMELINE_VIEW_TYPE = 'gtd-timeline';
@@ -31,12 +32,14 @@ export class TimelineView extends ItemView {
 	private lang: Lang;
 	private dateStr: string;
 	private fileCache: FileCache | null;
+	private parserCache: ParserCache | null;
 
-	constructor(leaf: WorkspaceLeaf, lang: Lang, fileCache?: FileCache) {
+	constructor(leaf: WorkspaceLeaf, lang: Lang, fileCache?: FileCache, parserCache?: ParserCache) {
 		super(leaf);
 		this.lang = lang;
 		this.dateStr = todayStr();
 		this.fileCache = fileCache ?? null;
+		this.parserCache = parserCache ?? null;
 	}
 
 	getViewType(): string { return TIMELINE_VIEW_TYPE; }
@@ -92,6 +95,15 @@ export class TimelineView extends ItemView {
 				: await this.app.vault.read(file);
 			const lines = content.split('\n');
 
+			// Use cached parsing to avoid re-parsing unchanged files
+			const allTasks = parseFileTasks(lines, file.path, this.parserCache ?? undefined);
+			const taskLines = new Set<number>();
+			const taskByLine = new Map<number, (typeof allTasks)[0]>();
+			for (const t of allTasks) {
+				taskLines.add(t.line);
+				taskByLine.set(t.line, t);
+			}
+
 			// Track heading stack for parent context
 			const headingStack: string[] = [];
 			let i = 0;
@@ -107,7 +119,8 @@ export class TimelineView extends ItemView {
 					headingStack.push(headingText);
 				}
 
-				const task = parseTaskLines(lines, i);
+				// Look up from cached tasks instead of re-parsing
+				const task = taskByLine.get(i);
 				if (task) {
 					const pathPrefix = headingStack.length > 0 ? headingStack.join(' > ') + ' > ' : '';
 					for (let j = i + 1; j < lines.length && j <= i + task.metaLineCount + 10; j++) {

@@ -1,5 +1,6 @@
 import { Priority, ParsedTask } from '../models/task';
 import { Lang, metaKeywords } from './i18n';
+import { ParserCache } from './parser-cache';
 
 // All metadata keywords (both languages) — hardcoded to avoid module load order issues
 const KW_RAW = [
@@ -141,6 +142,66 @@ export function parseTaskLines(lines: string[], startLine: number): ParsedTask |
 
 	task.metaLineCount = metaCount;
 	return task;
+}
+
+/**
+ * Parse all tasks from file content lines with optional LRU caching.
+ *
+ * Iterates through all lines, identifies task lines (with checkboxes),
+ * and parses each task including multi-line metadata. Skips empty lines,
+ * non-task lines, and standalone metadata lines.
+ *
+ * If a filePath and cache are provided, the result is cached and
+ * subsequent calls for the same filePath will return the cached result
+ * (as long as the cache entry hasn't been invalidated by file changes).
+ *
+ * This is more efficient than calling parseTaskLines() in a loop
+ * across multiple view refreshes, since unchanged files won't be re-parsed.
+ *
+ * @param lines - File content split by newline
+ * @param filePath - Optional file path for cache key (required if cache is provided)
+ * @param cache - Optional ParserCache instance
+ * @returns Array of parsed tasks
+ */
+export function parseFileTasks(
+	lines: string[],
+	filePath?: string,
+	cache?: ParserCache,
+): ParsedTask[] {
+	// Check cache first
+	if (filePath && cache) {
+		const cached = cache.get(filePath);
+		if (cached !== undefined) {
+			return cached;
+		}
+	}
+
+	const tasks: ParsedTask[] = [];
+	let i = 0;
+	while (i < lines.length) {
+		const line = lines[i];
+		if (!line) {
+			i++;
+			continue;
+		}
+		// Skip non-task lines and standalone metadata lines
+		if (isTaskLine(line) && !isMetaLine(line)) {
+			const task = parseTaskLines(lines, i);
+			if (task) {
+				tasks.push(task);
+				i += task.metaLineCount + 1;
+				continue;
+			}
+		}
+		i++;
+	}
+
+	// Cache the result for subsequent calls
+	if (filePath && cache) {
+		cache.set(filePath, tasks);
+	}
+
+	return tasks;
 }
 
 /**

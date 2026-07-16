@@ -2,6 +2,7 @@ import { Plugin, Notice, TAbstractFile } from 'obsidian';
 import { GtdPluginSettings, GtdSettingTab, DEFAULT_SETTINGS } from './settings';
 import { gtdDecorationField } from './utils/editor-ext';
 import { FileCache } from './utils/file-cache';
+import { ParserCache } from './utils/parser-cache';
 import { AgendaView, AGENDA_VIEW_TYPE } from './views/agenda-view';
 import { TimelineView, TIMELINE_VIEW_TYPE } from './views/timeline-view';
 import { StatsView, STATS_VIEW_TYPE } from './views/stats-view';
@@ -24,6 +25,7 @@ import { createTimerAPI } from './commands/timer-commands';
 export default class OrgGtdPlugin extends Plugin {
 	settings: GtdPluginSettings = { ...DEFAULT_SETTINGS };
 	private fileCache!: FileCache;
+	private parserCache!: ParserCache;
 
 	async onload() {
 		await this.loadSettings();
@@ -35,25 +37,32 @@ export default class OrgGtdPlugin extends Plugin {
 
 		// Shared file cache for all views — invalidated on vault events
 		this.fileCache = new FileCache(this.settings.gtdFolder + '/');
+		// Parser LRU cache — invalidated alongside file cache
+		this.parserCache = new ParserCache();
 		this.registerEvent(
 			this.app.vault.on('modify', (file: TAbstractFile) => {
 				this.fileCache.invalidate(file.path);
+				this.parserCache.invalidate(file.path);
 			}),
 		);
 		this.registerEvent(
 			this.app.vault.on('create', (file: TAbstractFile) => {
 				this.fileCache.invalidate(file.path);
+				this.parserCache.invalidate(file.path);
 			}),
 		);
 		this.registerEvent(
 			this.app.vault.on('delete', (file: TAbstractFile) => {
 				this.fileCache.invalidate(file.path);
+				this.parserCache.invalidate(file.path);
 			}),
 		);
 		this.registerEvent(
 			this.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
 				this.fileCache.invalidate(file.path);
+				this.parserCache.invalidate(file.path);
 				this.fileCache.invalidate(oldPath);
+				this.parserCache.invalidate(oldPath);
 			}),
 		);
 
@@ -102,7 +111,7 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.registerView(
 			AGENDA_VIEW_TYPE,
-			(leaf) => new AgendaView(leaf, this.settings, timerAPI, this.fileCache),
+			(leaf) => new AgendaView(leaf, this.settings, timerAPI, this.fileCache, this.parserCache),
 		);
 
 		this.addRibbonIcon('list-checks', 'GTD', () => {
@@ -111,11 +120,11 @@ export default class OrgGtdPlugin extends Plugin {
 
 		this.registerView(
 			TIMELINE_VIEW_TYPE,
-			(leaf) => new TimelineView(leaf, this.settings.lang, this.fileCache),
+			(leaf) => new TimelineView(leaf, this.settings.lang, this.fileCache, this.parserCache),
 		);
 		this.registerView(
 			STATS_VIEW_TYPE,
-			(leaf) => new StatsView(leaf, this.settings.lang, this.fileCache),
+			(leaf) => new StatsView(leaf, this.settings.lang, this.fileCache, this.parserCache),
 		);
 
 		// Auto-open agenda only if not already open
@@ -150,6 +159,7 @@ export default class OrgGtdPlugin extends Plugin {
 		setPomodoroRegisterIntervalFn(null);
 		// Clear any pending refresh timers via cache invalidation
 		this.fileCache.invalidateAll();
+		this.parserCache.invalidateAll();
 	}
 
 	async loadSettings() {

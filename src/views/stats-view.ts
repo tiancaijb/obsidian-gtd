@@ -1,7 +1,8 @@
 import { ItemView, WorkspaceLeaf, TFile, Notice, MarkdownView } from 'obsidian';
 import { t, Lang } from '../utils/i18n';
-import { parseTaskLines } from '../utils/parser';
+import { parseFileTasks } from '../utils/parser';
 import { FileCache } from '../utils/file-cache';
+import { ParserCache } from '../utils/parser-cache';
 import { ClockRecord, extractClockRecords, formatDuration as fmtClock } from '../utils/clock-parser';
 import { formatDate, getWeekStart, getMonthPeriodStart } from '../utils/date-utils';
 
@@ -35,11 +36,13 @@ export class StatsView extends ItemView {
 	private lang: Lang;
 	private period: PeriodKey = 'today';
 	private fileCache: FileCache | null;
+	private parserCache: ParserCache | null;
 
-	constructor(leaf: WorkspaceLeaf, lang: Lang, fileCache?: FileCache) {
+	constructor(leaf: WorkspaceLeaf, lang: Lang, fileCache?: FileCache, parserCache?: ParserCache) {
 		super(leaf);
 		this.lang = lang;
 		this.fileCache = fileCache ?? null;
+		this.parserCache = parserCache ?? null;
 	}
 
 	getViewType(): string { return STATS_VIEW_TYPE; }
@@ -170,19 +173,29 @@ export class StatsView extends ItemView {
 				: await this.app.vault.read(file);
 			const lines = content.split('\n');
 
+			// Use cached parsing to avoid re-parsing unchanged files
+			const allTasks = parseFileTasks(lines, file.path, this.parserCache ?? undefined);
+			const taskLines = new Set<number>();
+			const taskByLine = new Map<number, (typeof allTasks)[0]>();
+			for (const t of allTasks) {
+				taskLines.add(t.line);
+				taskByLine.set(t.line, t);
+			}
+
 			let i = 0;
 			while (i < lines.length) {
-				const task = parseTaskLines(lines, i);
+				// Look up from cached tasks instead of re-parsing
+				const task = taskByLine.get(i);
 				if (task) {
-					const taskRecords: ClockRecord[] = [];
+					const taskClockRecords: ClockRecord[] = [];
 					for (let j = i + 1; j < lines.length && j <= i + task.metaLineCount + 10; j++) {
 						const clockLine = lines[j];
 					if (!clockLine) continue;
 					const recs = extractClockRecords([clockLine]);
-						taskRecords.push(...recs);
+						taskClockRecords.push(...recs);
 					}
 					// Filter records by date range
-					const filtered = taskRecords.filter(r => this.recordInRange(r, rangeStart, rangeEnd));
+					const filtered = taskClockRecords.filter(r => this.recordInRange(r, rangeStart, rangeEnd));
 					if (filtered.length > 0) {
 						const totalMin = filtered.reduce((s, r) => s + r.durationMin, 0);
 						const existing = taskMap.get(task.text);

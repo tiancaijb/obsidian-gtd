@@ -1,7 +1,8 @@
 import { ItemView, WorkspaceLeaf, MarkdownView } from 'obsidian';
-import { parseTaskLines, isTaskLine, isMetaLine } from '../utils/parser';
+import { parseFileTasks } from '../utils/parser';
 import { GtdPluginSettings } from '../settings';
 import { FileCache } from '../utils/file-cache';
+import { ParserCache } from '../utils/parser-cache';
 import { AGENDA_VIEW_TYPE, TimerAPI, TaskEntry } from './agenda-types';
 import { AgendaUI, groupTasks } from './agenda-ui';
 
@@ -23,14 +24,16 @@ export class AgendaView extends ItemView {
 	private settings: GtdPluginSettings;
 	private timerAPI: TimerAPI;
 	private fileCache: FileCache | null;
+	private parserCache: ParserCache | null;
 	private refreshTimer: number | null = null;
 	private ui: AgendaUI | null = null;
 
-	constructor(leaf: WorkspaceLeaf, settings: GtdPluginSettings, timerAPI: TimerAPI, fileCache?: FileCache) {
+	constructor(leaf: WorkspaceLeaf, settings: GtdPluginSettings, timerAPI: TimerAPI, fileCache?: FileCache, parserCache?: ParserCache) {
 		super(leaf);
 		this.settings = settings;
 		this.timerAPI = timerAPI;
 		this.fileCache = fileCache ?? null;
+		this.parserCache = parserCache ?? null;
 		// UI is created lazily in onOpen() — no heavy work in constructor
 	}
 
@@ -148,15 +151,10 @@ export class AgendaView extends ItemView {
 				: await this.app.vault.read(file);
 			const lines = content.split('\n');
 
-			for (let i = 0; i < lines.length; i++) {
-				const currentLine = lines[i];
-				if (!currentLine) continue;
-				if (!isTaskLine(currentLine)) continue;
-				if (isMetaLine(currentLine)) continue; // skip if this is actually a meta line
+			// Use cached parsing to avoid re-parsing unchanged files
+			const tasks = parseFileTasks(lines, file.path, this.parserCache ?? undefined);
 
-				const task = parseTaskLines(lines, i);
-				if (!task) continue;
-
+			for (const task of tasks) {
 				let date = '';
 				let dateType: TaskEntry['dateType'] = '';
 				if (task.scheduled) { date = task.scheduled; dateType = 'scheduled'; }
@@ -164,9 +162,6 @@ export class AgendaView extends ItemView {
 				else if (task.closed) { date = task.closed; dateType = 'closed'; }
 
 				entries.push({ task, file, date, dateType });
-
-				// Skip metadata lines
-				i += task.metaLineCount;
 			}
 		}
 
